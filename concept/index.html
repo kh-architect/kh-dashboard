@@ -1,0 +1,1435 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Modeling & AI Render - Project Details">
+    <meta name="theme-color" content="#050505">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23000%22/><text y=%2250%22 x=%2250%22 dy=%22.35em%22 text-anchor=%22middle%22 fill=%22%23d9c38c%22 font-family=%22sans-serif%22 font-weight=%22bold%22 font-size=%2250%22>KH</text></svg>">
+    
+    <title>Modeling & AI Render | KH. El-Badawy</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;800&family=Montserrat:wght@200;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --bg-color: #080808; 
+            --text-main: #ffffff; 
+            --text-muted: #888888;
+            --card-bg: rgba(20, 20, 20, 0.6); 
+            --text-panel-bg: rgba(10, 10, 10, 0.8);
+            --accent: #d9c38c; 
+            --border: rgba(255,255,255,0.1);
+            --nav-bg: rgba(10, 10, 10, 0.8);
+            --font-main: 'Montserrat', sans-serif;
+            --font-display: 'Playfair Display', serif;
+            --gallery-bg: #111;
+        }
+        body.light-mode {
+            --bg-color: #f4f4f7; 
+            --text-main: #1a1a1a; 
+            --text-muted: #666666;
+            --card-bg: rgba(255, 255, 255, 0.6); 
+            --text-panel-bg: rgba(255, 255, 255, 0.85);
+            --accent: #b08d55; 
+            --border: rgba(0,0,0,0.1);
+            --nav-bg: rgba(255, 255, 255, 0.8);
+            --gallery-bg: #e5e5e5;
+        }
+        
+        body.rtl-mode { 
+            --font-main: 'Cairo', sans-serif; 
+            --font-display: 'Cairo', sans-serif; 
+            direction: rtl; 
+            text-align: right; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; outline: none; }
+        html { scroll-behavior: smooth; }
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: var(--font-main); 
+            overflow-x: hidden; 
+            -webkit-font-smoothing: antialiased; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+        }
+        h1, h2, h3 { font-family: var(--font-display); }
+
+        /* UI Layers */
+        .cursor-dot { position: fixed; top: 0; left: 0; width: 10px; height: 10px; background-color: #fff; border-radius: 50%; z-index: 100005; pointer-events: none; transform: translate(-50%, -50%); mix-blend-mode: exclusion; transition: transform 0.15s; }
+        .cursor-outline { position: fixed; top: 0; left: 0; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.5); border-radius: 50%; z-index: 100004; pointer-events: none; transition: all 0.2s ease-out; mix-blend-mode: exclusion; }
+        body.hover-active .cursor-dot { transform: translate(-50%, -50%) scale(0.5); }
+        body.hover-active .cursor-outline { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-color: transparent; }
+        body.in-lightbox * { cursor: auto !important; } body.in-lightbox .cursor-dot, body.in-lightbox .cursor-outline { display: none !important; }
+
+        /* Page Load Transition Only */
+        .shutter-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9998; pointer-events: none; display: flex; flex-direction: column; }
+        .shutter-top, .shutter-bottom { width: 100%; height: 50%; background-color: #fff; transform: scaleY(0); transition: transform 0.8s cubic-bezier(0.8, 0, 0.1, 1); }
+        .shutter-top { transform-origin: top; } .shutter-bottom { transform-origin: bottom; }
+        .shutter-layer.active .shutter-top, .shutter-layer.active .shutter-bottom { transform: scaleY(1); }
+
+        /* Controls */
+        .controls-wrapper { position: fixed; bottom: 30px; right: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; z-index: 9999; }
+        body.rtl-mode .controls-wrapper { right: auto; left: 30px; }
+        
+        .control-btn { border-radius: 50%; cursor: pointer; background: var(--card-bg); border: 1px solid var(--border); display: flex; justify-content: center; align-items: center; transition: all 0.3s; backdrop-filter: blur(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .control-btn:hover { transform: scale(1.1); box-shadow: 0 8px 20px rgba(0,0,0,0.2); border-color: var(--accent); }
+        
+        .theme-toggle { width: 60px; height: 60px; }
+        .theme-toggle i { font-size: 1.4rem; color: var(--text-main); }
+        
+        .mini-toggle { width: 40px; height: 40px; opacity: 0.7; }
+        .mini-toggle:hover { opacity: 1; transform: scale(1.1); }
+        .lang-text { font-size: 0.7rem; font-weight: 800; color: var(--text-main); text-transform: uppercase; }
+
+        /* Nav */
+        nav { position: fixed; top: 0; left: 0; width: 100%; height: 60px; background: transparent; z-index: 1000; display: flex; justify-content: center; transition: background 0.3s; }
+        nav.scrolled { background: var(--nav-bg); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); }
+        .nav-content { width: 100%; max-width: 1600px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; height: 100%; }
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .brand-area { font-size: 1.2rem; font-weight: 700; color: var(--text-main); text-decoration: none; letter-spacing: 2px; font-family: var(--font-display); }
+        
+        .back-link { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); text-decoration: none; transition: 0.3s; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .back-link:hover { color: var(--accent); } 
+        body:not(.rtl-mode) .back-link:hover i { transform: translateX(-5px); }
+        body.rtl-mode .back-link:hover i { transform: translateX(5px); }
+        body.rtl-mode .back-link i { transform: scaleX(-1); }
+
+        .nav-links { display: flex; gap: 30px; list-style: none; }
+        .nav-links li a { font-size: 0.8rem; color: var(--text-main); text-decoration: none; font-weight: 500; opacity: 0.7; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        .nav-links li a:hover { opacity: 1; color: var(--accent); }
+
+        /* BACKGROUND 3D CANVAS */
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+        /* Hero */
+        .hero-split { min-height: 100vh; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; position: relative; z-index: 2; pointer-events: none; }
+        .hero-content { width: 35%; padding-right: 20px; pointer-events: auto; }
+        body.rtl-mode .hero-content { padding-right: 0; padding-left: 20px; }
+        
+        #hero-model-container {
+            width: 60%;
+            height: 75vh;
+            position: relative;
+            z-index: 10;
+            pointer-events: auto; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* 3D Load Button */
+        .load-3d-btn {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid var(--accent);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 30px rgba(217, 195, 140, 0.1);
+            z-index: 20;
+        }
+        .load-3d-btn:hover { transform: translate(-50%, -50%) scale(1.1); background: rgba(217, 195, 140, 0.1); box-shadow: 0 0 50px rgba(217, 195, 140, 0.3); }
+        .load-3d-btn.hidden { opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(0.5); }
+        .load-3d-btn i { font-size: 2.5rem; color: var(--accent); margin-bottom: 5px; }
+        .load-3d-btn span { font-size: 0.7rem; color: var(--text-main); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* Model View Controls */
+        .model-controls {
+            position: absolute; bottom: 20px;
+            display: flex; gap: 10px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.5s;
+            background: rgba(0,0,0,0.5);
+            padding: 5px; border-radius: 20px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .model-controls.active { opacity: 1; pointer-events: auto; }
+        .mc-btn {
+            background: transparent; border: none;
+            color: var(--text-muted); font-size: 0.7rem;
+            padding: 5px 15px; border-radius: 15px;
+            cursor: pointer; transition: 0.3s;
+            font-weight: 600; text-transform: uppercase;
+        }
+        .mc-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); }
+        .mc-btn.active { background: var(--accent); color: #000; }
+
+        .hero-label { color: var(--accent); letter-spacing: 4px; text-transform: uppercase; font-size: 0.9rem; margin-bottom: 20px; opacity: 0; animation: fadeInUp 1s forwards 0.8s; }
+        h1 { font-size: clamp(2.5rem, 5.5vw, 6rem); line-height: 1.1; color: var(--text-main); margin-bottom: 30px; text-shadow: 0 10px 40px rgba(0,0,0,0.5); opacity: 0; animation: fadeInUp 1s forwards 1s; }
+        .hero-sub { color: var(--text-muted); max-width: 550px; font-size: 1.1rem; line-height: 1.6; opacity: 0; animation: fadeInUp 1s forwards 1.2s; }
+
+        /* Details */
+        .details-section { position: relative; z-index: 2; padding: 100px 8%; max-width: 1600px; margin: 0 auto; border-bottom: 1px solid var(--border); }
+        .details-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 60px; }
+        .info-card, .text-card { background: var(--text-panel-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding: 50px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .info-col ul { list-style: none; } .info-col li { margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
+        .info-label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 5px; }
+        .info-val { font-size: 1.1rem; color: var(--text-main); font-weight: 500; }
+        .tools-list { margin-top: 40px; } .tools-list li { display: flex; align-items: center; gap: 10px; color: var(--text-main); font-size: 0.9rem; margin-bottom: 10px; border: none; padding: 0; }
+        .tools-list i { color: var(--accent); font-size: 0.8rem; } body.rtl-mode .tools-list i { margin-left: 10px; margin-right: 0; }
+        .text-col h3 { font-size: 2rem; color: var(--text-main); margin: 50px 0 25px; font-weight: 400; } .text-col h3:first-child { margin-top: 0; }
+        .text-col p { font-size: 1.1rem; line-height: 1.9; color: var(--text-main); margin-bottom: 25px; opacity: 0.9; }
+        .text-col p:first-of-type::first-letter { font-family: var(--font-display); font-size: 3.5rem; float: left; margin-right: 15px; line-height: 0.8; color: var(--accent); }
+        body.rtl-mode .text-col p:first-of-type::first-letter { float: right; margin-right: 0; margin-left: 15px; }
+        .feature-list { list-style: none; padding-left: 0; } .feature-list li { margin-bottom: 20px; padding-left: 20px; position: relative; color: var(--text-main); opacity: 0.9; } body.rtl-mode .feature-list li { padding-left: 0; padding-right: 20px; }
+        .feature-list li::before { content: '•'; color: var(--accent); position: absolute; left: 0; font-size: 1.2rem; line-height: 1.5rem; } body.rtl-mode .feature-list li::before { left: auto; right: 0; }
+        .feature-list strong { color: var(--text-main); font-weight: 700; opacity: 1; }
+
+        /* Gallery */
+        .apple-gallery-section { position: relative; z-index: 2; padding: 120px 0; background: linear-gradient(to bottom, var(--bg-color), var(--gallery-bg) 20%, var(--gallery-bg) 80%, var(--bg-color)); margin-top: 0; }
+        .gallery-header { padding: 0 8%; margin-bottom: 50px; }
+        .gallery-header h2 { font-size: 2rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
+        
+        .gallery-container { 
+            display: flex; 
+            gap: 40px; 
+            overflow-x: auto; 
+            padding: 0 50% 50px; 
+            scroll-snap-type: x mandatory; 
+            scroll-behavior: smooth; 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+            cursor: grab; 
+        }
+        .gallery-container:active { cursor: grabbing; scroll-snap-type: none; }
+        .gallery-container::-webkit-scrollbar { display: none; }
+
+        .gallery-card {
+            flex: 0 0 auto; 
+            width: 85vw; 
+            max-width: 1400px; 
+            height: 75vh; 
+            position: relative; 
+            border-radius: 20px; 
+            overflow: hidden;
+            scroll-snap-align: center; 
+            background: var(--card-bg);
+            backdrop-filter: blur(20px) saturate(120%); -webkit-backdrop-filter: blur(20px) saturate(120%);
+            border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            transition: transform 0.4s ease;
+            will-change: transform;
+        }
+        .gallery-card:hover { transform: scale(1.01); border-color: var(--accent); }
+        .gallery-card img, .gallery-card video { width: 100%; height: 100%; object-fit: cover; transition: 0.7s; pointer-events: none; opacity: 0.9; }
+        .gallery-card:hover img, .gallery-card:hover video { transform: scale(1.03); opacity: 1; }
+
+        .card-label { position: absolute; bottom: 30px; left: 30px; z-index: 10; pointer-events: none; opacity: 0.8; transition: 0.3s; }
+        body.rtl-mode .card-label { left: auto; right: 30px; text-align: right; }
+        .card-num { font-size: 4rem; font-family: var(--font-display); line-height: 0.8; color: rgba(255,255,255,0.1); font-weight: 800; position: absolute; bottom: 15px; left: 0; }
+        body.rtl-mode .card-num { left: auto; right: 0; }
+        .gallery-card:hover .card-label { opacity: 1; transform: translateX(10px); }
+        body.rtl-mode .gallery-card:hover .card-label { transform: translateX(-10px); }
+
+        .expand-icon { position: absolute; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 1.2rem; transition: 0.3s; opacity: 0; transform: translateY(10px); cursor: pointer; z-index: 10; }
+        body.rtl-mode .expand-icon { right: auto; left: 30px; }
+        .gallery-card:hover .expand-icon { opacity: 1; transform: translateY(0); }
+        .expand-icon:hover { background: var(--accent); color: #000; }
+
+        .gallery-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: -10px; }
+        .gal-arrow { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); display: flex; justify-content: center; align-items: center; color: var(--text-muted); cursor: pointer; transition: 0.3s; background: var(--card-bg); backdrop-filter: blur(5px); }
+        .gal-arrow:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+        .gallery-dots { display: flex; gap: 10px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); opacity: 0.3; transition: 0.3s; cursor: pointer; }
+        .dot.active { background: var(--accent); opacity: 1; transform: scale(1.5); }
+
+        /* Lightbox */
+        .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 10002; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .lightbox.active { opacity: 1; pointer-events: all; }
+        .lb-main-area { flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; overflow: hidden; padding: 20px 20px 140px 20px; }
+        .lightbox-media { max-width: 100%; max-height: 100%; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 0 100px rgba(0,0,0,0.8); object-fit: contain; animation: zoomIn 0.3s ease; }
+        .lb-footer { position: absolute; bottom: 0; left: 0; height: 120px; width: 100%; background: rgba(10,10,10,0.95); border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: center; align-items: center; z-index: 10003; backdrop-filter: blur(10px); }
+        .lb-thumbnails { display: flex; gap: 20px; overflow-x: auto; padding: 0 40px; height: 100%; align-items: center; scroll-behavior: smooth; }
+        .lb-thumbnails::-webkit-scrollbar { display: none; }
+        .lb-thumb { width: 80px; height: 50px; object-fit: cover; border-radius: 6px; opacity: 0.4; cursor: pointer; transition: all 0.3s; border: 1px solid transparent; flex-shrink: 0; }
+        .lb-thumb:hover { opacity: 0.8; }
+        .lb-thumb.active { opacity: 1; transform: scale(1.4) translateY(-15px); border: 2px solid var(--accent); box-shadow: 0 15px 30px rgba(0,0,0,0.6); z-index: 10; }
+        .lb-close { position: absolute; top: 30px; right: 30px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 100004; transition: 0.3s; }
+        body.rtl-mode .lb-close { right: auto; left: 30px; }
+        .lb-close:hover { color: var(--accent); transform: rotate(90deg); }
+        .lb-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 1.5rem; cursor: pointer; transition: 0.2s; background: rgba(0,0,0,0.3); border-radius: 50%; z-index: 100004; }
+        .lb-nav-btn:hover { background: var(--accent); color: #000; }
+        .lb-prev { left: 30px; } .lb-next { right: 30px; }
+        body.rtl-mode .lb-prev { left: auto; right: 30px; transform: scaleX(-1) translateY(-50%); }
+        body.rtl-mode .lb-next { right: auto; left: 30px; transform: scaleX(-1) translateY(-50%); }
+
+        .next-project { position: relative; z-index: 2; padding: 150px 5%; text-align: center; border-top: 1px solid var(--border); cursor: pointer; background: var(--bg-color); transition: background 0.3s; }
+        .next-label { font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
+        .next-title { font-family: var(--font-display); font-size: clamp(3rem, 6vw, 6rem); color: var(--text-main); transition: color 0.3s; direction: ltr; }
+        .next-project:hover .next-title { color: var(--accent); }
+        footer { background: var(--bg-color); border-top: 1px solid var(--border); padding: 40px 5%; text-align: center; color: var(--text-muted); font-size: 0.8rem; position: relative; z-index: 2; }
+
+        @media (max-width: 900px) {
+            .hero-split { flex-direction: column; justify-content: center; align-items: flex-start; }
+            .hero-content { width: 100%; margin-top: 100px; padding-right: 0; padding-left: 0; }
+            #hero-model-container { width: 100%; height: 40vh; order: -1; }
+            .details-grid { grid-template-columns: 1fr; gap: 40px; }
+            .gallery-card { width: 85vw; height: 60vh; }
+            .gallery-container { padding: 0 5vw 50px; } 
+            .lb-thumbnails { gap: 10px; padding: 0 10px; }
+            .lb-thumb { width: 60px; height: 40px; }
+            .nav-links { display: none; } 
+        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Contact Popup */
+        .contact-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 100000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+        .contact-popup-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .contact-popup-content {
+            background: rgba(20, 20, 20, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            position: relative;
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.4s ease, border-color 0.4s;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            max-width: 90%;
+            width: 450px;
+        }
+        body.light-mode .contact-popup-content {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+        }
+        .contact-popup-overlay.active .contact-popup-content {
+            transform: translateY(0) scale(1);
+        }
+        .close-popup {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+        body.rtl-mode .close-popup {
+            right: auto;
+            left: 20px;
+        }
+        .close-popup:hover {
+            color: var(--accent);
+        }
+        .contact-popup-content h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+        .contact-popup-content p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        .popup-social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .popup-social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        body.light-mode .popup-social-icons a {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        .popup-social-icons a:hover {
+            background: var(--accent);
+            color: #000;
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        /* CTA Button Styling */
+        .cta-btn {
+            opacity: 0;
+            animation: fadeInUpCTA 1s forwards 1.4s;
+            pointer-events: auto;
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        body.light-mode .cta-btn {
+            opacity: 0;
+            animation: fadeInUpCTA 1s forwards 1.4s;
+            pointer-events: auto;
+            border-color: var(--border);
+        }
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: var(--accent);
+            z-index: -1;
+            transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .cta-btn:hover {
+            color: #000;
+            border-color: var(--accent);
+        }
+        .cta-btn:hover::before {
+            width: 100%;
+        }
+        
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            animation: fadeInScrollId 1s ease 3s forwards;
+            transition: opacity 0.5s;
+            z-index: 10;
+        }
+        .scroll-mouse {
+            width: 20px;
+            height: 32px;
+            border: 2px solid var(--text-muted);
+            border-radius: 15px;
+            position: relative;
+        }
+        .scroll-wheel {
+            width: 2px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 2px;
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollWheelId 2s infinite;
+        }
+        @keyframes scrollWheelId {
+            0% { top: 6px; opacity: 1; }
+            100% { top: 18px; opacity: 0; }
+        }
+        @keyframes fadeInScrollId {
+            0% { opacity: 0; }
+            100% { opacity: 0.6; }
+        }
+        .scroll-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        /* CTA Animation CSS */
+        @keyframes fadeInUpCTA {
+            0% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+</style>
+
+</head>
+<body>
+
+    <script>
+        (function() {
+            const t = localStorage.getItem('theme'); if(t === 'light') document.body.classList.add('light-mode');
+            let l = localStorage.getItem('lang'); if(!l) l='en'; if(l === 'ar') document.body.classList.add('rtl-mode');
+        })();
+    </script>
+
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+    <div class="shutter-layer" id="shutter-layer"><div class="shutter-top"></div><div class="shutter-bottom"></div></div>
+
+    <div class="controls-wrapper">
+        <div class="control-btn mini-toggle" id="lang-btn" onclick="toggleLang()" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+            <span class="lang-text">AR</span>
+        </div>
+        <div class="control-btn theme-toggle" id="theme-btn" onclick="toggleTheme()" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+            <i class="fas fa-sun"></i>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav-content">
+            <div class="nav-left">
+                <a href="../index.html" class="back-link" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+                    <i class="fas fa-arrow-left"></i> <span data-i18n="home">Home</span>
+                </a>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="#hero" data-i18n="overview" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">Overview</a></li>
+                <li><a href="#details" data-i18n="details" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">Details</a></li>
+                <li><a href="#gallery" data-i18n="gallery" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">Gallery</a></li>
+                <li><a href="#" class="nav-cta" onclick="openContactPopup(event)" onmouseenter="cursorHover()" onmouseleave="cursorLeave()" data-i18n="contact">Contact</a></li>
+                </ul>
+            <a href="../index.html" class="brand-area" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">KH.</a>
+        </div>
+    </nav>
+
+    <!-- Background 3D Scene -->
+    <div id="canvas-container"></div>
+
+    <div class="hero-split" id="hero">
+        <div class="hero-content">
+            <div class="hero-label" data-i18n="cat">Experimental / Concept</div>
+            <h1 data-i18n="title">MODELING &<br>AI RENDER<span style="color:var(--accent)">.</span></h1>
+            <div class="hero-sub" data-i18n="sub">Precise geometry meets atmospheric AI visualization. A workflow of reverse-engineering and style transfer.</div>
+                <a href="#" class="cta-btn" onclick="openContactPopup(event)" onmouseenter="cursorHover()" onmouseleave="cursorLeave()" data-i18n="stepInto">Step Into Your Vision</a>
+        </div>
+        
+        <!-- Hero 3D Model Viewport -->
+        <div id="hero-model-container">
+            <!-- Loading Button -->
+            <div class="load-3d-btn" id="load-model-btn" onclick="triggerLoadModel()" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+                <i class="fas fa-cube"></i>
+                <span data-i18n="view3d">View 3D</span>
+            </div>
+            
+            <!-- View Controls -->
+            <div class="model-controls" id="model-controls">
+                <button class="mc-btn active" onclick="updateModelStyle('points')" onmouseenter="cursorHover()">Points</button>
+                <button class="mc-btn" onclick="updateModelStyle('network')" onmouseenter="cursorHover()">Network</button>
+            </div>
+        </div>
+    </div>
+
+    <section class="details-section" id="details">
+        <div class="details-grid">
+            <div class="info-card info-col">
+                <ul>
+                    <li><span class="info-label" data-i18n="loc">Location</span><span class="info-val" data-i18n="locVal">Concept</span></li>
+                    <li><span class="info-label" data-i18n="year">Year</span><span class="info-val">2025</span></li>
+                    <li><span class="info-label" data-i18n="area">Status</span><span class="info-val" data-i18n="statusVal">R&D / Concept</span></li>
+                    <li><span class="info-label" data-i18n="type">Type</span><span class="info-val" data-i18n="typeVal">Mixed Workflow</span></li>
+                </ul>
+                <div class="tools-list">
+                    <span class="info-label" data-i18n="tools">Technical Tools</span>
+                    <ul>
+                        <li><i class="fas fa-cube"></i> Rhino 3D</li>
+                        <li><i class="fas fa-microchip"></i> AI Engines</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-card text-col">
+                <p data-i18n="p1">This project demonstrates a workflow combining precise 3D modeling based on reference with advanced AI-assisted rendering. The objective was to accurately recreate the complex geometry of an existing futuristic building design and then utilize AI tools to generate a photorealistic, atmospheric night scene.</p>
+                <h3 data-i18n="concept">Overview</h3>
+                <p data-i18n="p2">By merging traditional modeling precision with the generative power of AI, this project highlights a new frontier in architectural visualization, where speed and mood can be iterated upon rapidly without sacrificing geometric accuracy.</p>
+                <h3 data-i18n="features">Key Steps</h3>
+                <ul class="feature-list">
+                    <li data-i18n="f1"><strong>Design Recreation (Modeling):</strong> Reverse-engineering the curvilinear form and intricate horizontal lighting strips from reference imagery into a detailed, clean 3D model.</li>
+                    <li data-i18n="f2"><strong>AI Rendering Workflow:</strong> Leveraging cutting-edge AI engines to rapidly generate high-fidelity visuals, focusing on realistic material properties and lighting without long render times.</li>
+                    <li data-i18n="f3"><strong>Atmospheric Detailing:</strong> Using AI to enhance the scene with specific environmental effects, such as wet asphalt reflections, rain, and volumetric fog, to create a dramatic mood.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="apple-gallery-section" id="gallery">
+        <div class="gallery-header"><h2 data-i18n="gallery">Project Gallery</h2></div>
+        <div class="gallery-container" id="gallery-cont"></div>
+        <div class="gallery-controls">
+            <div class="gal-arrow" onclick="scrollGallery(-1)" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fas fa-chevron-left"></i></div>
+            <div class="gallery-dots" id="dots-container"></div>
+            <div class="gal-arrow" onclick="scrollGallery(1)" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fas fa-chevron-right"></i></div>
+        </div>
+    </section>
+
+    <div class="next-project" id="next-project-container" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+        <div class="next-label" data-i18n="next">Next Project</div>
+        <div class="next-title" id="next-title">Loading...</div>
+    </div>
+
+    <footer><div>Â© 2025 KH. El-Badawy. All Rights Reserved.</div></footer>
+
+    <div class="lightbox" id="lightbox">
+        <span class="lb-close" onclick="closeLightbox()" onmouseenter="cursorHover()">&times;</span>
+        <div class="lb-main-area">
+            <div class="lb-nav-btn lb-prev" onclick="changeImage(-1)" onmouseenter="cursorHover()"><i class="fas fa-chevron-left"></i></div>
+            <div class="lb-nav-btn lb-next" onclick="changeImage(1)" onmouseenter="cursorHover()"><i class="fas fa-chevron-right"></i></div>
+            <div id="lightbox-content-wrapper" style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+            </div>
+        </div>
+        <div class="lb-footer">
+            <div class="lb-thumbnails" id="lb-thumbs-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- EMBEDDED DATA FROM RHINO / GRASSHOPPER ---
+        let RAW_RHINO_DATA = null;
+        let rhinoDataPromise = null;
+        function loadRhinoData() {
+            if (rhinoDataPromise) return rhinoDataPromise;
+            rhinoDataPromise = fetch('rhino_data.txt')
+                .then(r => r.text())
+                .then(text => { RAW_RHINO_DATA = text; return text; });
+            return rhinoDataPromise;
+        } 
+
+        // --- Data Parsing ---
+        function parseRhinoData(str) {
+            const cleanData = str.replace(/"/g, ' ').replace(/,/g, ' ').split(/\s+/);
+            const numbers = [];
+            for(let i=0; i<cleanData.length; i++) {
+                const val = cleanData[i].trim();
+                if(val !== '' && !isNaN(val)) {
+                    numbers.push(parseFloat(val));
+                }
+            }
+            return numbers;
+        }
+
+        let EMBEDDED_MODEL_DATA = [];
+
+        // --- TRANSLATIONS ---
+        const translations = {
+            en: {
+                home: "Home", overview: "Overview", details: "Details", gallery: "Gallery",
+                view3d: "View 3D",
+                cat: "Experimental / Concept",
+                title: "MODELING &<br>AI RENDER<span style='color:var(--accent)'>.</span>",
+                sub: "Precise geometry meets atmospheric AI visualization. A workflow of reverse-engineering and style transfer.",
+                loc: "Location", locVal: "Concept", year: "Year", area: "Status", statusVal: "R&D / Concept", type: "Type", typeVal: "Mixed Workflow", tools: "Technical Tools",
+                p1: "This project demonstrates a workflow combining precise 3D modeling based on reference with advanced AI-assisted rendering. The objective was to accurately recreate the complex geometry of an existing futuristic building design and then utilize AI tools to generate a photorealistic, atmospheric night scene.",
+                concept: "Overview",
+                p2: "By merging traditional modeling precision with the generative power of AI, this project highlights a new frontier in architectural visualization, where speed and mood can be iterated upon rapidly without sacrificing geometric accuracy.",
+                features: "Key Steps",
+                f1: "<strong>Design Recreation (Modeling):</strong> Reverse-engineering the curvilinear form and intricate horizontal lighting strips from reference imagery into a detailed, clean 3D model.",
+                f2: "<strong>AI Rendering Workflow:</strong> Leveraging cutting-edge AI engines to rapidly generate high-fidelity visuals, focusing on realistic material properties and lighting without long render times.",
+                f3: "<strong>Atmospheric Detailing:</strong> Using AI to enhance the scene with specific environmental effects, such as wet asphalt reflections, rain, and volumetric fog, to create a dramatic mood.",
+                network: "Network", points: "Points",
+                next: "Next Project", contact: "Contact", stepInto: "Step Into Your Vision", popupSub: "Let\'s craft reality together."
+            },
+            ar: {
+                home: "الرئيسية", overview: "نظرة عامة", details: "التفاصيل", gallery: "المعرض",
+                view3d: "عرض ثلاثي الأبعاد",
+                cat: "تجريبي / مفاهيمي",
+                title: "نمذجة و<br>عرض بالذكاء الاصطناعي<span style='color:var(--accent)'>.</span>",
+                sub: "الهندسة الدقيقة تلتقي بالتصوير الجوي بالذكاء الاصطناعي. سير عمل يجمع بين الهندسة العكسية ونقل الأسلوب.",
+                loc: "الموقع", locVal: "مفاهيمي", year: "السنة", area: "الحالة", statusVal: "بحث وتطوير", type: "النوع", typeVal: "سير عمل مختلط", tools: "الأدوات التقنية",
+                p1: "يوضح هذا المشروع سير عمل يجمع بين النمذجة ثلاثية الأبعاد الدقيقة المبنية على مرجع والعرض المتقدم بمساعدة الذكاء الاصطناعي. كان الهدف إعادة إنشاء الهندسة المعقدة لتصميم مبنى مستقبلي بدقة ثم استخدام أدوات الذكاء الاصطناعي لإنشاء مشهد ليلي واقعي وجوي.",
+                concept: "نبذة عامة",
+                p2: "من خلال دمج دقة النمذجة التقليدية مع القوة التوليدية للذكاء الاصطناعي، يسلط هذا المشروع الضوء على حدود جديدة في الإظهار المعماري.",
+                features: "الخطوات الرئيسية",
+                f1: "<strong>إعادة إنشاء التصميم (النمذجة):</strong> هندسة عكسية للشكل المنحني وشرائط الإضاءة الأفقية المعقدة من صور مرجعية إلى نموذج ثلاثي الأبعاد مفصل ونظيف.",
+                f2: "<strong>سير عمل العرض بالذكاء الاصطناعي:</strong> الاستفادة من محركات الذكاء الاصطناعي المتطورة لإنشاء مرئيات عالية الدقة بسرعة.",
+                f3: "<strong>التفاصيل الجوية:</strong> استخدام الذكاء الاصطناعي لتعزيز المشهد بتأثيرات بيئية محددة مثل انعكاسات الأسفلت المبلل والمطر والضباب الحجمي.","network": "الشبكة", "points": "نقاط",
+                next: "المشروع التالي", contact: "تواصل", stepInto: "اخطُ نحو رؤيتك", popupSub: "دعنا نصنع الواقع معًا.", scroll: "مرر"
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'en';
+        if(currentLang === 'ar') {
+            document.body.classList.add('rtl-mode');
+            document.querySelector('.lang-text').innerText = 'EN';
+        } else {
+            document.querySelector('.lang-text').innerText = 'AR';
+        }
+
+        // --- MOUSE CURSOR ---
+        function cursorHover() { document.body.classList.add('hover-active'); }
+        function cursorLeave() { document.body.classList.remove('hover-active'); }
+
+        function toggleLang() {
+            triggerShutter(() => {
+                currentLang = currentLang === 'en' ? 'ar' : 'en';
+                localStorage.setItem('lang', currentLang);
+                applyLang();
+            });
+        }
+
+        function applyLang() {
+            const t = translations[currentLang];
+            document.body.classList.toggle('rtl-mode', currentLang === 'ar');
+            document.querySelector('.lang-text').innerText = currentLang === 'en' ? 'AR' : 'EN';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(t[key]) el.innerHTML = t[key];
+            });
+
+            const pBtn = document.querySelector('.mc-btn[onclick*="points"]');
+            const nBtn = document.querySelector('.mc-btn[onclick*="network"]');
+            if(pBtn) pBtn.innerText = t.points;
+            if(nBtn) nBtn.innerText = t.network;
+        }
+        applyLang();
+
+        function triggerShutter(callback) {
+            const shutter = document.getElementById('shutter-layer');
+            shutter.classList.add('active');
+            setTimeout(() => { callback(); setTimeout(() => shutter.classList.remove('active'), 200); }, 600);
+        }
+
+                                // --- NAVIGATION LOGIC ---
+            let savedProjects = JSON.parse(localStorage.getItem('kh_projects_data') || '[]');
+
+            if (savedProjects.length === 0 || !savedProjects[0].folder) {
+                const MY_PROJECTS = [
+                    { file: "001_Ultra-Real_UE5_Interior_Rendering.jpeg", folder: "interior" },
+                    { file: "002_Faculty_of_Architecture_&_AI.jpg", folder: "faculty" }, 
+                    { file: "003_Arabic Crafts Forum Modeling& render.png", folder: "forum" },
+                    { file: "004_rhino_Modeling_&_AI_Render_Existing_Concept.png", folder: "concept" },
+                    { file: "005_Landscape_Design.jpg", folder: "landscape" },
+                    { file: "006_chair_no_02_03.jpg", folder: "chair" }
+                ];
+                savedProjects = MY_PROJECTS.map(item => {
+                    const file = item.file;
+                    const nameWithoutExt = file.replace(/\.[^/.]+$/, "");
+                    const numberMatch = nameWithoutExt.match(/\d+/);
+                    const order = numberMatch ? parseInt(numberMatch[0]) : 999;
+                    let title = nameWithoutExt.replace(/^\d+[\s_-]*/, '').replace(/[_-]/g, ' ').trim();
+                    return {
+                        filename: file,
+                        cleanName: nameWithoutExt,
+                        folder: item.folder,
+                        title: title || "Untitled",
+                        order: order
+                    };
+                }).sort((a, b) => a.order - b.order);
+                localStorage.setItem('kh_projects_data', JSON.stringify(savedProjects));
+            }
+
+            if (savedProjects.length > 0) {
+                // Find current project index by matching the URL path against folders
+                let currIndex = savedProjects.findIndex(p => window.location.href.includes('/' + p.folder + '/'));
+                if (currIndex === -1 && typeof CURRENT_PROJECT_KEY !== 'undefined') {
+                    currIndex = savedProjects.findIndex(p => p.cleanName.includes(CURRENT_PROJECT_KEY) || p.title.includes(CURRENT_PROJECT_KEY));
+                }
+                if (currIndex === -1) currIndex = 0;
+
+                const nextIndex = (currIndex + 1) % savedProjects.length;
+                const nextProj = savedProjects[nextIndex];
+                const nextFolder = nextProj.folder || nextProj.cleanName;
+
+                document.getElementById('next-title').innerText = nextProj.title;
+                document.getElementById('next-project-container').onclick = () => {
+                    triggerShutter(() => {
+                        window.location.href = `../${nextFolder}/index.html`;
+                    });
+                };
+            }
+
+            // --- GALLERY ---
+        const gallery = document.getElementById('gallery-cont');
+        const dotsContainer = document.getElementById('dots-container');
+        const thumbsContainer = document.getElementById('lb-thumbs-container');
+        const maxImages = 30; 
+        let mediaItems = []; 
+        let curIndex = 0;
+        let isDown = false, startX, scrollLeft, isDragging = false;
+
+        async function loadImages() {
+            gallery.innerHTML = ''; 
+            mediaItems = [];
+            for(let i=1; i<=maxImages; i++) {
+                const card = document.createElement('div');
+                card.className = 'gallery-card';
+                card.style.display = 'none';
+                card.id = `card-${i}`;
+                gallery.appendChild(card);
+                findAndLoadMedia(i, card); 
+            }
+        }
+
+        function findAndLoadMedia(index, card) {
+            const variations = [
+                { ext: '.mp4', type: 'video' }, { ext: '.webm', type: 'video' },
+                { ext: '.webp', type: 'image' }, { ext: '.jpg', type: 'image' },
+                { ext: '.png', type: 'image' }, { ext: '.jpeg', type: 'image' }
+            ];
+
+            function getFilenames(idx, extension) {
+                return [
+                    `${idx}${extension}`,
+                    `${idx.toString().padStart(2, '0')}${extension}`,
+                    `${idx.toString().padStart(3, '0')}${extension}`
+                ];
+            }
+
+            let queue = [];
+            variations.forEach(v => {
+                const names = getFilenames(index, v.ext);
+                names.forEach(name => queue.push({ name: name, type: v.type }));
+            });
+
+            let attempt = 0;
+
+            function tryNext() {
+                if (attempt >= queue.length) { card.remove(); updateDots(); return; }
+                const item = queue[attempt];
+                const filename = item.name;
+                const fileType = item.type;
+
+                if (fileType === 'image') {
+                    const img = new Image();
+                    img.src = filename;
+                    img.onload = () => { renderCardContent(card, index, filename, 'image'); };
+                    img.onerror = () => { attempt++; tryNext(); };
+                } else {
+                    const vid = document.createElement('video');
+                    vid.src = filename;
+                    vid.onloadeddata = () => { renderCardContent(card, index, filename, 'video'); };
+                    vid.onerror = () => { attempt++; tryNext(); };
+                }
+            }
+
+            tryNext();
+        }
+
+        function renderCardContent(card, index, src, type) {
+            const displayNum = index.toString().padStart(2, '0');
+            let contentHtml = '';
+            
+            if (type === 'image') {
+                contentHtml = `<img src="${src}" alt="Project Image">`;
+            } else {
+                contentHtml = `<video src="${src}" muted loop autoplay playsinline style="object-fit: cover; width: 100%; height: 100%; pointer-events: none;"></video>`;
+            }
+
+            card.innerHTML = `
+                ${contentHtml}
+                <div class="card-label"><div class="card-num">${displayNum.substring(1)}</div></div>
+                <div class="expand-icon"><i class="fas fa-expand-alt"></i></div>
+            `;
+            
+            const openAction = () => { 
+                if(!isDragging) {
+                    const visibleCards = Array.from(document.querySelectorAll('.gallery-card')).filter(c => c.style.display !== 'none');
+                    const myIndex = visibleCards.indexOf(card);
+                    if(myIndex !== -1) openLightbox(myIndex);
+                }
+            };
+            card.querySelector('.expand-icon').onclick = (e) => { e.stopPropagation(); openAction(); };
+            card.onclick = openAction;
+            
+            card.onmouseenter = () => { document.body.classList.add('hover-active'); };
+            card.onmouseleave = () => document.body.classList.remove('hover-active');
+            
+            card.style.display = 'block'; 
+            setTimeout(() => rebuildMediaArray(), 50);
+        }
+
+                                function rebuildMediaArray() {
+                mediaItems = [];
+                const cards = document.querySelectorAll('.gallery-card');
+                if (typeof thumbsContainer !== 'undefined') thumbsContainer.innerHTML = '';
+                cards.forEach(c => {
+                    if (c.style.display !== 'none') {
+                        const img = c.querySelector('img');
+                        const vid = c.querySelector('video');
+                        let src = '', type = '';
+                        if (img) { type = 'image'; src = img.src; }
+                        else if (vid) { type = 'video'; src = vid.src; }
+                        
+                        if (src) {
+                            mediaItems.push({ type, src });
+                            if (typeof thumbsContainer !== 'undefined') {
+                                const thumb = document.createElement(type === 'video' ? 'video' : 'img');
+                                thumb.src = src;
+                                thumb.className = 'lb-thumb';
+                                const itemIndex = mediaItems.length - 1;
+                                thumb.onclick = () => { curIndex = itemIndex; updateLightbox(); };
+                                thumbsContainer.appendChild(thumb);
+                            }
+                        }
+                    }
+                });
+                updateDots();
+            }
+
+        function updateDots() {
+            const visibleCards = Array.from(document.querySelectorAll('.gallery-card')).filter(c => c.style.display !== 'none');
+            const count = visibleCards.length;
+            dotsContainer.innerHTML = '';
+            for(let i=0; i<count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot' + (i===0?' active':'');
+                dot.onclick = () => {
+                    if(visibleCards[i]) {
+                        const centerPos = visibleCards[i].offsetLeft - (window.innerWidth/2) + (visibleCards[i].offsetWidth/2);
+                        gallery.scrollTo({left: centerPos, behavior:'smooth'});
+                    }
+                };
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function scrollGallery(dir) {
+            const card = document.querySelector('.gallery-card');
+            if(card) {
+                const w = card.offsetWidth + 30;
+                if(document.body.classList.contains('rtl-mode')) dir = -dir;
+                gallery.scrollBy({ left: dir * w, behavior: 'smooth' });
+            }
+        }
+
+        gallery.addEventListener('mousedown', (e) => { isDown=true; isDragging=false; gallery.style.scrollSnapType='none'; startX=e.pageX-gallery.offsetLeft; scrollLeft=gallery.scrollLeft; });
+        gallery.addEventListener('mouseleave', () => { isDown=false; gallery.style.scrollSnapType='x mandatory'; });
+        gallery.addEventListener('mouseup', () => { isDown=false; gallery.style.scrollSnapType='x mandatory'; setTimeout(()=>isDragging=false, 50); });
+        gallery.addEventListener('mousemove', (e) => { if(!isDown)return; e.preventDefault(); const x=e.pageX-gallery.offsetLeft; const walk=(x-startX)*2; gallery.scrollLeft=scrollLeft-walk; if(Math.abs(walk)>5)isDragging=true; });
+
+        gallery.addEventListener('scroll', () => {
+            const center = gallery.scrollLeft + window.innerWidth/2;
+            const cards = document.querySelectorAll('.gallery-card');
+            const dots = document.querySelectorAll('.dot');
+            cards.forEach((c, i) => {
+                const cCenter = c.offsetLeft + c.offsetWidth/2;
+                if(Math.abs(center - cCenter) < c.offsetWidth/2) {
+                    dots.forEach(d => d.classList.remove('active'));
+                    if(dots[i]) dots[i].classList.add('active');
+                }
+            });
+        });
+        
+        loadImages();
+
+        // --- LIGHTBOX ---
+        function openLightbox(idx) { curIndex = idx; document.getElementById('lightbox').classList.add('active'); document.body.classList.add('in-lightbox'); updateLightbox(); }
+        function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); document.body.classList.remove('in-lightbox'); const container = document.getElementById('lightbox-content-wrapper'); const vid = container.querySelector('video'); if(vid) vid.pause(); }
+        function changeImage(dir) { curIndex += dir; if(curIndex < 0) curIndex = mediaItems.length-1; if(curIndex >= mediaItems.length) curIndex = 0; updateLightbox(); }
+                                function updateLightbox() {
+                const container = document.getElementById('lightbox-content-wrapper');
+                container.innerHTML = '';
+                const item = mediaItems[curIndex];
+                if (!item) return;
+
+                if (item.type === 'video') {
+                    const vid = document.createElement('video');
+                    vid.src = item.src;
+                    vid.className = 'lightbox-media';
+                    vid.controls = true;
+                    vid.autoplay = true;
+                    container.appendChild(vid);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = item.src;
+                    img.className = 'lightbox-media';
+                    container.appendChild(img);
+                }
+                
+                if (typeof thumbsContainer !== 'undefined') {
+                    const thumbs = thumbsContainer.querySelectorAll('.lb-thumb');
+                    thumbs.forEach((t, i) => {
+                        if (i === curIndex) {
+                            t.classList.add('active');
+                            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        } else {
+                            t.classList.remove('active');
+                        }
+                    });
+                }}
+        document.addEventListener('keydown', (e) => {
+            if(document.body.classList.contains('in-lightbox')) { if(e.key === 'Escape') closeLightbox(); if(e.key === 'ArrowLeft') changeImage(-1); if(e.key === 'ArrowRight') changeImage(1); }
+        });
+
+        // --- 3D SCENE CONFIG ---
+        let isLight = document.body.classList.contains('light-mode');
+        let bgScene, bgCamera, bgRenderer, bgParticles, bgStructures;
+        let heroScene, heroCamera, heroRenderer, heroModel;
+        
+        let introTriggered = false; let explosionProgress = 0;
+        let globalX = 0, globalY = 0;
+        let targetX = 0, targetY = 0;
+        
+        // Transitions Variables
+        let isExploding = false;
+        let explosionTime = 0;
+        let originalPositionsAttr;
+        let targetPositionsAttr;
+        let randomDelaysAttr; 
+        
+        let drawRangeCount = 0;
+        let targetDrawRangeCount = 0;
+        
+        let heroPointsMesh = null;
+        let heroNetworkMesh = null;
+        let currentMode = 'points'; 
+        
+        const explosionDuration = 2.5;
+
+        function lerp(start, end, t) { return start * (1 - t) + end * t; }
+
+        // 1. BACKGROUND SCENE
+        function initBackground3D() {
+            const container = document.getElementById('canvas-container'); 
+            bgScene = new THREE.Scene();
+            bgScene.fog = new THREE.FogExp2(isLight ? 0xf4f4f7 : 0x080808, 0.02); 
+            bgCamera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            bgCamera.position.z = 20; 
+            
+            bgRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            bgRenderer.setClearColor(isLight ? 0xf4f4f7 : 0x080808);
+            container.appendChild(bgRenderer.domElement);
+
+            const pGeo = new THREE.BufferGeometry(); 
+            const pCount = 3000;
+            const pPos = new Float32Array(pCount*3); 
+            const pTarget = new Float32Array(pCount*3);
+            for(let i=0; i<pCount*3; i+=3) {
+                pTarget[i]=(Math.random()-0.5)*70; pTarget[i+1]=(Math.random()-0.5)*40; pTarget[i+2]=(Math.random()-0.5)*50;
+                pPos[i]=0; pPos[i+1]=0; pPos[i+2]=0; 
+            }
+            pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+            pGeo.setAttribute('targetPos', new THREE.BufferAttribute(pTarget, 3));
+            const pMat = new THREE.PointsMaterial({ size: 0.06, color: 0xd9c38c, transparent: true, opacity: 0.7 });
+            bgParticles = new THREE.Points(pGeo, pMat);
+            bgScene.add(bgParticles);
+
+            bgStructures = new THREE.Group();
+            const baseGeo = new THREE.IcosahedronGeometry(3, 1);
+            const edgesGeo = new THREE.EdgesGeometry(baseGeo);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.4 });
+            for (let i=0; i<20; i++) {
+                const s = new THREE.LineSegments(edgesGeo, lineMat);
+                s.userData={ tx:(Math.random()-0.5)*60, ty:(Math.random()-0.5)*40, tz:(Math.random()-0.5)*30, ts:Math.random()*1+0.5 };
+                s.scale.set(0,0,0); s.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+                bgStructures.add(s);
+            }
+            bgScene.add(bgStructures);
+
+            bgParticles.visible = !isLight;
+            bgStructures.visible = isLight;
+        }
+
+        // 2. HERO MODEL SCENE
+        function initHero3D() {
+            const container = document.getElementById('hero-model-container');
+            const w = container.offsetWidth;
+            const h = container.offsetHeight;
+
+            heroScene = new THREE.Scene();
+            heroCamera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
+            heroCamera.position.set(0, 10, 50); 
+            heroCamera.lookAt(0, 0, 0);
+
+            heroRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            heroRenderer.setSize(w, h);
+            heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            heroRenderer.setClearColor(0x000000, 0); 
+            container.insertBefore(heroRenderer.domElement, container.firstChild);
+        }
+
+        async function triggerLoadModel() {
+            const btn = document.getElementById('load-model-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Loading...</span>';
+            btn.style.pointerEvents = 'none';
+            try {
+                await loadRhinoData();
+                EMBEDDED_MODEL_DATA = parseRhinoData(RAW_RHINO_DATA);
+                if (!EMBEDDED_MODEL_DATA || EMBEDDED_MODEL_DATA.length === 0) {
+                    throw new Error('No 3D model data found');
+                }
+                btn.classList.add('hidden');
+                setTimeout(() => {
+                    createHeroBuilding(); 
+                    document.getElementById('model-controls').classList.add('active');
+                    isExploding = true;
+                    explosionTime = 0;
+                }, 400);
+            } catch(e) {
+                console.error('Failed to load 3D data:', e);
+                if (e.message && e.message.includes('No 3D model')) {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Error - No 3D File</span>';
+                } else {
+                    btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Error - Use Live Server</span>';
+                }
+                btn.style.pointerEvents = 'auto';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    rhinoDataPromise = null;
+                }, 3000);
+            }
+        }
+
+        function createHeroBuilding() {
+            heroModel = new THREE.Group();
+            heroScene.add(heroModel);
+
+            const vertices = [];
+            if(EMBEDDED_MODEL_DATA.length === 0) { console.warn("No Model Data Found!"); return; }
+
+            for (let i = 0; i < EMBEDDED_MODEL_DATA.length; i += 3) {
+                const x = EMBEDDED_MODEL_DATA[i];
+                const y = EMBEDDED_MODEL_DATA[i+2];
+                const z = -EMBEDDED_MODEL_DATA[i+1];
+                if(!isNaN(x) && !isNaN(y) && !isNaN(z)) vertices.push(x, y, z);
+            }
+
+            let minX=Infinity, minY=Infinity, minZ=Infinity;
+            let maxX=-Infinity, maxY=-Infinity, maxZ=-Infinity;
+            for(let i=0; i<vertices.length; i+=3) {
+                if(vertices[i]<minX) minX=vertices[i]; if(vertices[i]>maxX) maxX=vertices[i];
+                if(vertices[i+1]<minY) minY=vertices[i+1]; if(vertices[i+1]>maxY) maxY=vertices[i+1];
+                if(vertices[i+2]<minZ) minZ=vertices[i+2]; if(vertices[i+2]>maxZ) maxZ=vertices[i+2];
+            }
+            const centerX = (minX+maxX)/2;
+            const centerY = (minY+maxY)/2;
+            const centerZ = (minZ+maxZ)/2;
+            
+            for(let i=0; i<vertices.length; i+=3) {
+                vertices[i] -= centerX;
+                vertices[i+1] -= centerY;
+                vertices[i+2] -= centerZ;
+            }
+
+            const maxDim = Math.max(maxX-minX, maxY-minY, maxZ-minZ);
+            const scaleFactor = 25 / maxDim;
+            for(let i=0; i<vertices.length; i++) vertices[i] *= scaleFactor;
+
+            const startPositions = [];
+            const randomDelays = [];
+            for(let i=0; i<vertices.length; i+=3) {
+                startPositions.push(0, 0, 0);
+                randomDelays.push(Math.random());
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            const currentPositions = new Float32Array(startPositions);
+            const finalPositions = new Float32Array(vertices);
+            
+            geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
+            targetPositionsAttr = finalPositions; 
+            originalPositionsAttr = new Float32Array(startPositions);
+            randomDelaysAttr = new Float32Array(randomDelays);
+            
+            const pMat = new THREE.PointsMaterial({ 
+                size: 0.15,
+                color: isLight ? 0x555555 : 0xd9c38c,
+                transparent: true, opacity: 1.0,
+                sizeAttenuation: true
+            });
+            
+            heroPointsMesh = new THREE.Points(geometry, pMat);
+            heroModel.add(heroPointsMesh);
+
+            const netVertices = [];
+            const vCount = vertices.length / 3;
+            for (let i = 0; i < vCount; i++) {
+                const x1 = vertices[i*3];
+                const y1 = vertices[i*3+1];
+                const z1 = vertices[i*3+2];
+                const checkLimit = Math.min(vCount, i + 30); 
+                for (let j = i + 1; j < checkLimit; j++) {
+                    const x2 = vertices[j*3];
+                    const y2 = vertices[j*3+1];
+                    const z2 = vertices[j*3+2];
+                    const dist = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2) + Math.pow(z2-z1, 2));
+                    if (dist < 1.8) { 
+                        netVertices.push(x1, y1, z1);
+                        netVertices.push(x2, y2, z2);
+                    }
+                }
+            }
+
+            const netGeometry = new THREE.BufferGeometry();
+            netGeometry.setAttribute('position', new THREE.Float32BufferAttribute(netVertices, 3));
+            const netMat = new THREE.LineBasicMaterial({
+                color: varColor(1),
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.AdditiveBlending
+            });
+            heroNetworkMesh = new THREE.LineSegments(netGeometry, netMat);
+            heroNetworkMesh.geometry.setDrawRange(0, 0);
+            targetDrawRangeCount = 0; 
+            heroModel.add(heroNetworkMesh);
+        }
+
+        function updateModelStyle(style) {
+            document.querySelectorAll('.mc-btn').forEach(b => b.classList.remove('active'));
+            const clickedBtn = document.querySelector(`.mc-btn[onclick*="${style}"]`);
+            if(clickedBtn) clickedBtn.classList.add('active');
+            
+            currentMode = style;
+            if (style === 'points') {
+                targetDrawRangeCount = 0; 
+            } else if (style === 'network') {
+                if(heroNetworkMesh) targetDrawRangeCount = heroNetworkMesh.geometry.attributes.position.count;
+            }
+            if(heroPointsMesh) heroPointsMesh.material.color.setHex(isLight ? 0x555555 : 0xd9c38c);
+            if(heroNetworkMesh) heroNetworkMesh.material.color.setHex(varColor(1));
+        }
+
+        function varColor(type) {
+            if(isLight) return type===0 ? 0x333333 : 0x000000;
+            return type===0 ? 0xd9c38c : 0x4dd0e1;
+        }
+
+        const clock = new THREE.Clock();
+        function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            
+            const normalizedX = (globalX / window.innerWidth) - 0.5;
+            const normalizedY = (globalY / window.innerHeight) - 0.5;
+            targetX = lerp(targetX, normalizedX, 0.05);
+            targetY = lerp(targetY, normalizedY, 0.05);
+
+            if(introTriggered) {
+                explosionProgress += (1 - explosionProgress) * 0.04;
+                if(bgParticles.visible) {
+                    const pos = bgParticles.geometry.attributes.position.array;
+                    const tgt = bgParticles.geometry.attributes.targetPos.array;
+                    for(let i=0; i<pos.length; i++) pos[i] += (tgt[i] - pos[i]) * 0.05;
+                    bgParticles.geometry.attributes.position.needsUpdate = true;
+                }
+                if(bgStructures.visible) {
+                    bgStructures.children.forEach(s => {
+                        s.position.x += (s.userData.tx - s.position.x) * 0.05;
+                        s.position.y += (s.userData.ty - s.position.y) * 0.05;
+                        s.position.z += (s.userData.tz - s.position.z) * 0.05;
+                        const scale = s.userData.ts * explosionProgress;
+                        s.scale.set(scale, scale, scale);
+                    });
+                }
+            }
+            if(bgParticles.visible) {
+                bgParticles.rotation.y = targetX * 0.2; 
+                bgParticles.rotation.x = targetY * 0.2;
+            }
+            if(bgStructures.visible) {
+                bgStructures.rotation.y = targetX * 0.2;
+                bgStructures.rotation.x = targetY * 0.2;
+                bgStructures.children.forEach(s => { s.rotation.x += 0.002; s.rotation.y += 0.002; });
+            }
+            bgRenderer.render(bgScene, bgCamera);
+
+            if(heroModel) {
+                heroModel.rotation.y = targetX * 1.8;
+                heroModel.rotation.x = targetY * 0.5;
+
+                if(isExploding && heroPointsMesh) {
+                    explosionTime += delta;
+                    const rawT = Math.min(1, explosionTime / explosionDuration);
+                    const positions = heroPointsMesh.geometry.attributes.position.array;
+                    const count = positions.length / 3;
+                    
+                    for(let i=0; i < count; i++) {
+                        const delay = randomDelaysAttr[i] * 0.5; 
+                        let localT = (rawT - delay) / (1 - 0.5); 
+                        localT = Math.max(0, Math.min(1, localT)); 
+                        const t = easeOutCubic(localT);
+                        positions[i*3] = targetPositionsAttr[i*3] * t;
+                        positions[i*3+1] = targetPositionsAttr[i*3+1] * t;
+                        positions[i*3+2] = targetPositionsAttr[i*3+2] * t;
+                    }
+                    heroPointsMesh.geometry.attributes.position.needsUpdate = true;
+                    if(rawT >= 1) isExploding = false;
+                }
+
+                if(heroNetworkMesh) {
+                    const speed = 0.02; 
+                    drawRangeCount += (targetDrawRangeCount - drawRangeCount) * speed;
+                    const drawCount = Math.floor(drawRangeCount);
+                    heroNetworkMesh.geometry.setDrawRange(0, drawCount - (drawCount % 2));
+                    if(heroPointsMesh) {
+                         const targetOp = (currentMode === 'network') ? 0.3 : 1.0;
+                         heroPointsMesh.material.opacity = lerp(heroPointsMesh.material.opacity, targetOp, 0.05);
+                    }
+                }
+            }
+            heroRenderer.render(heroScene, heroCamera);
+        }
+
+        window.addEventListener('load', () => { 
+            initBackground3D();
+            initHero3D();
+            animate();
+            setTimeout(() => introTriggered = true, 500); 
+        });
+        
+        window.addEventListener('mousemove', (e) => {
+            document.querySelector('.cursor-dot').style.left = `${e.clientX}px`;
+            document.querySelector('.cursor-dot').style.top = `${e.clientY}px`;
+            document.querySelector('.cursor-outline').style.left = `${e.clientX}px`;
+            document.querySelector('.cursor-outline').style.top = `${e.clientY}px`;
+            globalX = e.clientX; globalY = e.clientY;
+        });
+
+        window.addEventListener('resize', () => {
+            bgCamera.aspect = window.innerWidth / window.innerHeight;
+            bgCamera.updateProjectionMatrix();
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            const hc = document.getElementById('hero-model-container');
+            if(hc && hc.offsetWidth > 0) {
+                heroCamera.aspect = hc.offsetWidth / hc.offsetHeight;
+                heroCamera.updateProjectionMatrix();
+                heroRenderer.setSize(hc.offsetWidth, hc.offsetHeight);
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if(window.scrollY > 50) nav.classList.add('scrolled');
+            else nav.classList.remove('scrolled');
+
+            const hoverable = document.elementFromPoint(globalX, globalY);
+            if(hoverable && (hoverable.closest('.gallery-card') || hoverable.closest('.next-project') || hoverable.closest('.back-link') || hoverable.closest('.nav-links') || hoverable.closest('.lang-btn') || hoverable.closest('.load-3d-btn') || hoverable.closest('.mc-btn'))) {
+                document.body.classList.add('hover-active');
+            } else {
+                document.body.classList.remove('hover-active');
+            }
+        });
+
+        // FIXED TOGGLE THEME FUNCTION
+        function toggleTheme() {
+            triggerShutter(() => {
+                isLight = !isLight;
+                document.body.classList.toggle('light-mode');
+                localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                
+                // Update Icon
+                const tIcon = document.querySelector('.theme-toggle i');
+                if(isLight) { tIcon.classList.remove('fa-sun'); tIcon.classList.add('fa-moon'); }
+                else { tIcon.classList.remove('fa-moon'); tIcon.classList.add('fa-sun'); }
+
+                // Force Scene Update
+                const bg = isLight ? 0xf4f4f7 : 0x080808; 
+                if(bgScene) bgScene.fog.color.setHex(bg); 
+                if(bgRenderer) bgRenderer.setClearColor(bg);
+                
+                if(bgParticles) bgParticles.visible = !isLight; 
+                if(bgStructures) bgStructures.visible = isLight;
+                
+                // Reset bg animation scales to ensure visibility
+                if(isLight && bgStructures) bgStructures.children.forEach(s => s.scale.set(1,1,1));
+                
+                updateModelStyle(currentMode);
+            });
+        }
+        
+        // Initial Icon Set
+        const themeIcon = document.querySelector('.theme-toggle i');
+        if(isLight) { themeIcon.classList.remove('fa-sun'); themeIcon.classList.add('fa-moon'); }
+        else { themeIcon.classList.remove('fa-moon'); themeIcon.classList.add('fa-sun'); }
+    </script>
+
+    <div class="contact-popup-overlay" id="contact-popup">
+        <div class="contact-popup-content">
+            <span class="close-popup" onclick="closeContactPopup()" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">&times;</span>
+            <h2 data-i18n="stepInto">Step Into Your Vision</h2>
+            <p data-i18n="popupSub">Let's craft reality together.</p>
+            <div class="popup-social-icons">
+                <a href="https://www.youtube.com/@khalidal-bdawy" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.instagram.com/albdawy.art" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-instagram"></i></a>
+                <a href="https://wa.me/201096277438" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-whatsapp"></i></a>
+                <a href="mailto:khalidalbdawy@gmail.com" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </div>
+    <script>
+        
+    </script>
+<script>
+    function openContactPopup(e) {
+        if (e) e.preventDefault();
+        const popup = document.getElementById('contact-popup');
+        if (popup && !popup.classList.contains('active')) {
+            popup.classList.add('active');
+            history.pushState({ popupOpen: true }, '', '');
+        }
+    }
+    function closeContactPopup(fromPopState) {
+        const popup = document.getElementById('contact-popup');
+        if (popup && popup.classList.contains('active')) {
+            popup.classList.remove('active');
+            if (fromPopState !== true && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('contact-popup');
+        if (popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === this) closeContactPopup();
+            });
+        }
+    });
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeContactPopup();
+    });
+    window.addEventListener('popstate', function(e) {
+        closeContactPopup(true);
+    });
+</script>
+</body>
+
+</html>
+
+

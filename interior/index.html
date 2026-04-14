@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Ultra-Real UE5 Interior Rendering - Project Details">
+    <meta name="theme-color" content="#050505">
+
+    <!-- Favicon -->
+    <link rel="icon" href="../Khalid.svg" type="image/svg+xml">
+
+    <title>Ultra-Real UE5 | KH. El-Badawy</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&family=Montserrat:wght@200;400;600&family=Playfair+Display&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Preload Three.js for faster 3D background init -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script">
+
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Early theme/lang detection to prevent FOUC -->
+    <script>
+        (function () {
+            const t = localStorage.getItem('theme'); if (t === 'light') document.body.classList.add('light-mode');
+            let l = localStorage.getItem('lang'); if (!l) l = 'en'; if (l === 'ar') document.body.classList.add('rtl-mode');
+        })();
+    </script>
+
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+    <div class="shutter-layer" id="shutter-layer">
+        <div class="shutter-top"></div>
+        <div class="shutter-bottom"></div>
+    </div>
+
+    <div class="controls-wrapper">
+        <div class="control-btn mini-toggle" id="lang-btn" onclick="toggleLang()" onmouseenter="cursorHover()"
+            onmouseleave="cursorLeave()">
+            <span class="lang-text">AR</span>
+        </div>
+        <div class="control-btn theme-toggle" id="theme-btn" onclick="toggleTheme()" onmouseenter="cursorHover()"
+            onmouseleave="cursorLeave()">
+            <i class="fas fa-sun"></i>
+        </div>
+    </div>
+
+    <div class="gyro-btn" id="gyro-btn" onclick="requestGyroPermission()">
+        <i class="fas fa-mobile-alt"></i>
+    </div>
+
+    <nav>
+        <div class="nav-content">
+            <div class="nav-left">
+                <a href="../index.html" class="back-link" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+                    <i class="fas fa-arrow-left"></i> <span data-i18n="home">Home</span>
+                </a>
+            </div>
+
+            <ul class="nav-links">
+                <li><a href="#hero" data-i18n="overview" onmouseenter="cursorHover()"
+                        onmouseleave="cursorLeave()">Overview</a></li>
+                <li><a href="#details" data-i18n="details" onmouseenter="cursorHover()"
+                        onmouseleave="cursorLeave()">Details</a></li>
+                <li><a href="#gallery" data-i18n="gallery" onmouseenter="cursorHover()"
+                        onmouseleave="cursorLeave()">Gallery</a></li>
+                <li><a href="#" class="nav-cta" onclick="openContactPopup(event)" onmouseenter="cursorHover()"
+                        onmouseleave="cursorLeave()" data-i18n="contact">Contact</a></li>
+            </ul>
+            <a href="../index.html" class="brand-area" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><img
+                    src="../Khalid.svg" class="brand-svg" alt="KH Brand"></a>
+        </div>
+    </nav>
+
+    <!-- Background 3D Scene -->
+    <div id="canvas-container"></div>
+
+    <div class="hero-split" id="hero">
+        <div class="hero-content">
+            <div class="hero-label" data-i18n="cat">Visualization Project</div>
+            <h1 data-i18n="title">ULTRA-REAL<br>INTERIOR<span style="color:var(--accent)">.</span></h1>
+            <div class="hero-sub" data-i18n="sub">Cinematic quality blurring the line between rendering and reality.
+                High-end photorealism in Unreal Engine 5.</div>
+            <a href="#" class="cta-btn" onclick="openContactPopup(event)" onmouseenter="cursorHover()"
+                onmouseleave="cursorLeave()" data-i18n="stepInto">Step Into Your Vision</a>
+        </div>
+
+        <!-- Hero 3D Model Viewport -->
+        <div id="hero-model-container">
+            <!-- Loading Button -->
+            <div class="load-3d-btn" id="load-model-btn" onclick="triggerLoadModel()" onmouseenter="cursorHover()"
+                onmouseleave="cursorLeave()">
+                <i class="fas fa-cube"></i>
+                <span data-i18n="view3d">View 3D</span>
+            </div>
+
+            <!-- View Controls -->
+            <div class="model-controls" id="model-controls">
+                <button class="mc-btn active" onclick="updateModelStyle('points')"
+                    onmouseenter="cursorHover()">Points</button>
+                <button class="mc-btn" onclick="updateModelStyle('network')"
+                    onmouseenter="cursorHover()">Network</button>
+            </div>
+        </div>
+
+        <div class="scroll-indicator" id="scroll-ind">
+            <div class="scroll-mouse">
+                <div class="scroll-wheel"></div>
+            </div>
+            <span class="scroll-text" data-i18n="scroll">Scroll</span>
+        </div>
+    </div>
+
+    <section class="details-section" id="details">
+        <div class="details-grid">
+            <div class="info-card info-col">
+                <ul>
+                    <li><span class="info-label" data-i18n="loc">Location</span><span class="info-val"
+                            data-i18n="locVal">Cairo, Egypt</span></li>
+                    <li><span class="info-label" data-i18n="year">Year</span><span class="info-val">2026</span></li>
+                    <li><span class="info-label" data-i18n="area">Status</span><span class="info-val"
+                            data-i18n="statusVal">Concept</span></li>
+                    <li><span class="info-label" data-i18n="type">Type</span><span class="info-val"
+                            data-i18n="typeVal">Interior</span></li>
+                </ul>
+                <div class="tools-list">
+                    <span class="info-label" data-i18n="tools">Technical Tools</span>
+                    <ul>
+                        <li><i class="fas fa-cube"></i> Unreal Engine 5</li>
+                        <li><i class="fas fa-lightbulb"></i> Lumen GI</li>
+                        <li><i class="fas fa-layer-group"></i> Quixel Megascans</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-card text-col">
+                <p data-i18n="p1">This project showcases a high-end Photorealistic Interior Visualization created in
+                    Unreal Engine 5. The goal was to achieve a cinematic quality that blurs the line between rendering
+                    and reality, focusing on light interaction with interior surfaces and furniture.</p>
+                <h3 data-i18n="concept">Overview</h3>
+                <p data-i18n="p2">By leveraging real-time technologies, this project explores the potential of immersive
+                    architectural visualization, allowing for instant feedback on lighting, materials, and spatial
+                    composition without long render times.</p>
+                <h3 data-i18n="features">Technical Highlights</h3>
+                <ul class="feature-list">
+                    <li data-i18n="f1"><strong>Cinematic Interior Lighting:</strong> Utilizing Lumen for real-time
+                        global illumination, capturing natural light streaming through windows and its bounce off
+                        interior walls.</li>
+                    <li data-i18n="f2"><strong>Micro-Detail Materials:</strong> Applying high-fidelity PBR textures for
+                        fabrics, wood, and metals to ensure every surface looks tactile and realistic.</li>
+                    <li data-i18n="f3"><strong>Camera Animation:</strong> Smooth, slow-paced cinematic walkthroughs that
+                        highlight the spatial flow and interior design details.</li>
+                    <li data-i18n="f4"><strong>Dynamic Shadows &amp; Reflections:</strong> Precise ray-traced
+                        reflections on
+                        glass and polished surfaces to enhance the interior's depth.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="apple-gallery-section" id="gallery">
+        <div class="gallery-header">
+            <h2 data-i18n="gallery">Project Gallery</h2>
+        </div>
+        <div class="gallery-container" id="gallery-cont"></div>
+        <div class="gallery-controls">
+            <div class="gal-arrow" onclick="scrollGallery(-1)" onmouseenter="cursorHover()"
+                onmouseleave="cursorLeave()"><i class="fas fa-chevron-left"></i></div>
+            <div class="gallery-dots" id="dots-container"></div>
+            <div class="gal-arrow" onclick="scrollGallery(1)" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+                <i class="fas fa-chevron-right"></i></div>
+        </div>
+    </section>
+
+    <div class="next-project" id="next-project-container" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">
+        <div class="next-label" data-i18n="next">Next Project</div>
+        <div class="next-title" id="next-title">Loading...</div>
+    </div>
+
+    <footer>
+        <div>&copy; 2026 KH. El-Badawy. All Rights Reserved.</div>
+    </footer>
+
+    <div class="lightbox" id="lightbox">
+        <span class="lb-close" onclick="closeLightbox()" onmouseenter="cursorHover()">&times;</span>
+        <div class="lb-main-area">
+            <div class="lb-nav-btn lb-prev" onclick="changeImage(-1)" onmouseenter="cursorHover()"><i
+                    class="fas fa-chevron-left"></i></div>
+            <div class="lb-nav-btn lb-next" onclick="changeImage(1)" onmouseenter="cursorHover()"><i
+                    class="fas fa-chevron-right"></i></div>
+            <div id="lightbox-content-wrapper"
+                style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;"></div>
+        </div>
+        <div class="lb-footer">
+            <div class="lb-thumbnails" id="lb-thumbs-container"></div>
+        </div>
+    </div>
+
+    <div class="contact-popup-overlay" id="contact-popup">
+        <div class="contact-popup-content">
+            <span class="close-popup" onclick="closeContactPopup()" onmouseenter="cursorHover()"
+                onmouseleave="cursorLeave()">&times;</span>
+            <h2 data-i18n="stepInto">Step Into Your Vision</h2>
+            <p data-i18n="popupSub">Let's craft reality together.</p>
+            <div class="popup-social-icons">
+                <a href="https://www.youtube.com/@khalidal-bdawy" target="_blank" onmouseenter="cursorHover()"
+                    onmouseleave="cursorLeave()"><img src="../youtube-symbol-svgrepo-com.svg" class="social-svg" alt="YouTube"></a>
+                <a href="https://www.instagram.com/albdawy.art" target="_blank" onmouseenter="cursorHover()"
+                    onmouseleave="cursorLeave()"><img src="../instagram-logo-svgrepo-com.svg" class="social-svg" alt="Instagram"></a>
+                <a href="https://wa.me/201096277438" target="_blank" onmouseenter="cursorHover()"
+                    onmouseleave="cursorLeave()"><img src="../whatsapp-svgrepo-com.svg" class="social-svg" alt="WhatsApp"></a>
+                <a href="mailto:khalidalbdawy@gmail.com" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><img
+                        src="../email.svg" class="social-svg" alt="Email"></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <!-- Main Script -->
+    <script src="script.js" defer></script>
+</body>
+
+</html>

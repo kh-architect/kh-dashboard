@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhino Import & Viewport Settings</title>
+    
+    <!-- ØªØ­Ù…ÙŠÙ„ Ù…ÙƒØªØ¨Ø© Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- ØªØ­Ù…ÙŠÙ„ Ø£Ø¯ÙˆØ§Øª Ø§Ù„ØªØ­ÙƒÙ… Ø¨Ø§Ù„ÙƒØ§Ù…ÙŠØ±Ø§ OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Ø®Ø· Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Ø£ÙŠÙ‚ÙˆÙ†Ø§Øª Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+    <style>
+        /* --- 1. Variables & Base --- */
+        :root {
+            --bg-color: #050505;
+            --glass-bg: rgba(20, 20, 20, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6; 
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --radius-lg: 16px;
+            --radius-sm: 8px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            font-size: 13px;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+        }
+
+        /* --- 2. Floating Import Panel (Top Right) --- */
+        #import-panel {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            width: 280px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .panel-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-main);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        body.rtl-mode .lb-next {
+            right: auto;
+            left: 30px;
+            transform: scaleX(-1) translateY(-50%);
+        }
+
+        /* Contact Popup */
+        .contact-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 100000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .contact-popup-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .contact-popup-content {
+            background: rgba(20, 20, 20, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            position: relative;
+            transform: translateY(30px) scale(0.95);
+            transition: transform 0.4s ease, border-color 0.4s;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            max-width: 90%;
+            width: 450px;
+        }
+
+        body.light-mode .contact-popup-content {
+            background: rgba(255, 255, 255, 0.5);
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+        }
+
+        .contact-popup-overlay.active .contact-popup-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+        body.rtl-mode .close-popup {
+            right: auto;
+            left: 20px;
+        }
+
+        .close-popup:hover {
+            color: var(--accent);
+        }
+
+        .contact-popup-content h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .contact-popup-content p {
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .popup-social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .popup-social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        body.light-mode .popup-social-icons a {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .popup-social-icons a:hover {
+            background: var(--accent);
+            color: #000;
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        /* CTA Button Styling */
+        .cta-btn {
+            opacity: 0;
+            animation: fadeInUpCTA 1s forwards 1.4s;
+            pointer-events: auto;
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+
+        body.light-mode .cta-btn {
+            opacity: 0;
+            animation: fadeInUpCTA 1s forwards 1.4s;
+            pointer-events: auto;
+            border-color: var(--border);
+        }
+
+        .cta-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background: var(--accent);
+            z-index: -1;
+            transition: width 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .cta-btn:hover {
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .cta-btn:hover::before {
+            width: 100%;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+        /* --- 3. Bottom Toolbar (Viewport Controls) --- */
+        #viewport-bar {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            padding: 8px 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 100;
+        }
+
+        .bar-divider {
+            width: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 0 6px;
+            height: 24px;
+            align-self: center;
+        }
+
+        /* --- Buttons --- */
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .icon-btn:hover {
+            color: var(--text-main);
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .icon-btn.active {
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.15);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+        }
+        
+        .icon-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--primary);
+        }
+
+        .material-symbols-rounded { font-size: 20px; }
+        
+        /* Tooltip */
+        .icon-btn[title]:hover::before {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 1;
+            backdrop-filter: blur(4px);
+        }
+
+        /* --- Form Elements --- */
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .file-upload {
+            border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: var(--radius-sm);
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            box-sizing: border-box;
+            font-family: 'Inter', monospace;
+            resize: vertical;
+            min-height: 80px;
+            font-size: 11px;
+        }
+        
+        textarea:focus { outline: none; border-color: var(--primary); }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), #2563eb);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 11px;
+        }
+        
+        .btn-primary:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+        
+        .btn-text {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0;
+            margin-top: 10px;
+            opacity: 0.8;
+            transition: 0.2s;
+        }
+        .btn-text:hover { opacity: 1; }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        
+        .label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+        
+        select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* --- New Color Picker Styling --- */
+        .color-palette-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .gradient-wheel-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .gradient-wheel-btn:hover { transform: scale(1.1); border-color: #fff; }
+        
+        /* Input hidden inside the wheel */
+        input[type="color"] {
+            opacity: 0;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            cursor: pointer;
+        }
+
+        .preset-colors {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .preset-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s;
+        }
+        .preset-dot:hover { transform: scale(1.2); border-color: #fff; }
+        .preset-dot.active { transform: scale(1.2); border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.4); }
+
+        /* Progress */
+        .progress-container { margin-top: 20px; display: none; }
+        .progress-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease-out; }
+
+        /* Utilities */
+        .hidden { display: none; }
+    
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            animation: fadeInScrollId 1s ease 3s forwards;
+            transition: opacity 0.5s;
+            z-index: 10;
+        }
+        .scroll-mouse {
+            width: 20px;
+            height: 32px;
+            border: 2px solid var(--text-muted);
+            border-radius: 15px;
+            position: relative;
+        }
+        .scroll-wheel {
+            width: 2px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 2px;
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollWheelId 2s infinite;
+        }
+        @keyframes scrollWheelId {
+            0% { top: 6px; opacity: 1; }
+            100% { top: 18px; opacity: 0; }
+        }
+        @keyframes fadeInScrollId {
+            0% { opacity: 0; }
+            100% { opacity: 0.6; }
+        }
+        .scroll-text {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        /* CTA Animation CSS */
+        @keyframes fadeInUpCTA {
+            0% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+</style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <!-- 1. Right Floating Panel (Control) -->
+    <div id="import-panel">
+        <div class="panel-header">
+            <span class="material-symbols-rounded" style="color:var(--primary)">tune</span>
+            <span class="panel-title">Controls</span>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('upload')">Upload</button>
+            <button class="tab-btn" onclick="switchTab('manual')">Input</button>
+        </div>
+
+        <div id="tab-upload" class="tab-content">
+            <div class="file-upload" onclick="document.getElementById('file-input').click()">
+                <span class="material-symbols-rounded" style="font-size:24px; color:var(--text-muted)">cloud_upload</span>
+                <div style="margin-top:8px; font-size:11px; color:var(--text-muted)">Browse .txt / .csv</div>
+                <input type="file" id="file-input" class="hidden" accept=".txt,.csv,.asc,.xyz">
+            </div>
+            <div id="file-name" style="margin-top:8px; font-size:10px; color:var(--primary); text-align:center"></div>
+        </div>
+
+        <div id="tab-manual" class="tab-content hidden">
+            <textarea id="manual-text" placeholder="X, Y, Z coordinates..."></textarea>
+            <button class="btn-text" onclick="pasteText()">
+                <span class="material-symbols-rounded" style="font-size:14px">content_paste</span> Paste
+            </button>
+        </div>
+
+        <div style="margin: 20px 0; border-bottom:1px solid var(--glass-border)"></div>
+
+        <!-- Settings -->
+        <div class="settings-row">
+            <span class="label">Delimiter</span>
+            <select id="delimiter-select">
+                <option value="space">Space</option>
+                <option value="comma">Comma</option>
+                <option value="tab">Tab</option>
+            </select>
+        </div>
+
+        <!-- Stylish Color Palette -->
+        <div class="settings-row" style="margin-top: 15px; flex-direction: column; align-items: flex-start;">
+            <span class="label" style="margin-bottom: 8px;">Model Color</span>
+            <div class="color-palette-container">
+                <!-- Custom Wheel -->
+                <div class="gradient-wheel-btn" title="Pick Custom Color">
+                    <input type="color" id="custom-color" value="#ffffff" oninput="setCustomColor(this.value)">
+                </div>
+                <!-- Vertical Divider -->
+                <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
+                <!-- Presets -->
+                <div class="preset-colors">
+                    <div class="preset-dot active" style="background:#aaaaaa" onclick="setColor(0xaaaaaa, this)" title="Silver"></div>
+                    <div class="preset-dot" style="background:#D4AF37" onclick="setColor(0xD4AF37, this)" title="Gold"></div>
+                    <div class="preset-dot" style="background:#3b82f6" onclick="setColor(0x3b82f6, this)" title="Blue"></div>
+                    <div class="preset-dot" style="background:#10b981" onclick="setColor(0x10b981, this)" title="Emerald"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progress-wrapper">
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <div style="text-align:right; font-size:9px; color:var(--text-muted); margin-top:4px" id="progress-text">0%</div>
+        </div>
+
+        <button class="btn-primary" id="process-btn">Generate Model</button>
+    </div>
+
+    <!-- 2. Bottom Toolbar (Viewport) -->
+    <div id="viewport-bar">
+        <!-- Views -->
+        <button class="icon-btn active" onclick="setCameraView('perspective', this)" title="Perspective">
+            <span class="material-symbols-rounded">in_home_mode</span>
+        </button>
+        <button class="icon-btn" onclick="setCameraView('top', this)" title="Top View">
+            <span class="material-symbols-rounded">grid_view</span>
+        </button>
+        <button class="icon-btn" onclick="setCameraView('front', this)" title="Front View">
+            <span class="material-symbols-rounded">splitscreen_bottom</span>
+        </button>
+        <button class="icon-btn" onclick="setCameraView('right', this)" title="Right View">
+            <span class="material-symbols-rounded">dock_to_right</span>
+        </button>
+
+        <div class="bar-divider"></div>
+
+        <!-- Styles -->
+        <button class="icon-btn" onclick="setDisplayMode('points', this)" title="Points">
+            <span class="material-symbols-rounded">grain</span>
+        </button>
+        <button class="icon-btn" onclick="setDisplayMode('wireframe', this)" title="Wireframe">
+            <span class="material-symbols-rounded">grid_4x4</span>
+        </button>
+        <button class="icon-btn active" id="btn-mode-shaded" onclick="setDisplayMode('shaded', this)" title="Shaded">
+            <span class="material-symbols-rounded">deployed_code</span>
+        </button>
+        <button class="icon-btn" id="btn-mode-network" onclick="setDisplayMode('network', this)" title="Network">
+            <span class="material-symbols-rounded">hub</span>
+        </button>
+        
+        <div class="bar-divider"></div>
+
+        <!-- Toggles -->
+        <button class="icon-btn active" id="btn-grid" onclick="toggleGrid()" title="Toggle Grid">
+            <span class="material-symbols-rounded">grid_on</span>
+        </button>
+        <button class="icon-btn" id="btn-rotate" onclick="toggleAutoRotate()" title="Auto Rotate">
+            <span class="material-symbols-rounded">360</span>
+        </button>
+    </div>
+
+    <script>
+        // ============================================
+        // 1. SETUP THREE.JS SCENE (Enhanced Lighting)
+        // ============================================
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.005);
+
+        // [FIX] Dynamic range to prevent clipping
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100000);
+        camera.position.set(30, 25, 30);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true; 
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotateSpeed = 1.0;
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        const spotLight = new THREE.SpotLight(0xffffff, 1);
+        spotLight.position.set(20, 40, 20);
+        spotLight.angle = Math.PI / 4;
+        spotLight.penumbra = 0.5;
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024;
+        spotLight.shadow.mapSize.height = 1024;
+        scene.add(spotLight);
+
+        const fillLight = new THREE.DirectionalLight(0x3b82f6, 0.3);
+        fillLight.position.set(-20, 10, -20);
+        scene.add(fillLight);
+
+        // --- Ground Plane ---
+        const planeGeometry = new THREE.PlaneGeometry(200, 200);
+        const planeMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x0a0a0a,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const groundPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+        groundPlane.rotation.x = -Math.PI / 2;
+        groundPlane.position.y = -0.01; 
+        groundPlane.receiveShadow = true;
+        scene.add(groundPlane);
+
+        const gridHelper = new THREE.GridHelper(100, 40, 0x333333, 0x111111);
+        gridHelper.position.y = 0.0; 
+        scene.add(gridHelper);
+
+        // --- Gumball (Origin Gizmo) ---
+        function createGumball() {
+            const axes = new THREE.Group();
+            const axisRadius = 0.08;
+            const axisLength = 3;
+            const coneRadius = 0.2;
+            const coneLength = 0.5;
+
+            const matX = new THREE.MeshStandardMaterial({color: 0xff3333, roughness: 0.3});
+            const matY = new THREE.MeshStandardMaterial({color: 0x33ff33, roughness: 0.3});
+            const matZ = new THREE.MeshStandardMaterial({color: 0x3333ff, roughness: 0.3});
+
+            function createAxis(material, rotation) {
+                const group = new THREE.Group();
+                const cyl = new THREE.Mesh(new THREE.CylinderGeometry(axisRadius, axisRadius, axisLength, 16), material);
+                cyl.position.y = axisLength / 2;
+                const cone = new THREE.Mesh(new THREE.ConeGeometry(coneRadius, coneLength, 16), material);
+                cone.position.y = axisLength;
+                group.add(cyl);
+                group.add(cone);
+                if(rotation) group.rotation.set(rotation.x, rotation.y, rotation.z);
+                return group;
+            }
+
+            axes.add(createAxis(matY, {x:0, y:0, z:0}));
+            axes.add(createAxis(matZ, {x:Math.PI/2, y:0, z:0}));
+            axes.add(createAxis(matX, {x:0, y:0, z:-Math.PI/2}));
+            
+            const centerSphere = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            axes.add(centerSphere);
+            scene.add(axes);
+        }
+        createGumball();
+
+        // ============================================
+        // 2. ASSETS & STATE
+        // ============================================
+        function createPointTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(32,32,0, 32,32,32);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath(); ctx.arc(32,32,30,0,Math.PI*2); ctx.fill();
+            return new THREE.CanvasTexture(canvas);
+        }
+        const pointSprite = createPointTexture();
+
+        let mainMesh = null, edgesHelper = null, importedPoints = null, networkLines = null;
+        let isIntroAnimation = false;
+        let introProgress = 0;
+        let animationTargetPositions = []; 
+        let animationStartPositions = [];  
+        let lineIndices = []; 
+
+        const targetView = {
+            pointSize: 0.8,
+            pointColor: new THREE.Color(0xaaaaaa),
+            lineOpacity: 0.0,
+            meshOpacity: 1.0,
+            wireOpacity: 0.0,
+            pulseLines: false
+        };
+
+        // ============================================
+        // 3. DEMO OBJECT
+        // ============================================
+        function createDemo() {
+            cleanup();
+            const geo = new THREE.IcosahedronGeometry(8, 2);
+            
+            geo.computeBoundingBox();
+            const bbox = geo.boundingBox;
+            const height = bbox.max.y - bbox.min.y;
+            const centerOffset = -bbox.min.y;
+            geo.translate(0, centerOffset, 0); 
+
+            const mat = new THREE.MeshStandardMaterial({
+                color: targetView.pointColor, 
+                roughness: 0.2, 
+                metalness: 0.8,
+                transparent: true,
+                opacity: 1.0,
+                side: THREE.DoubleSide
+            });
+            mainMesh = new THREE.Mesh(geo, mat);
+            mainMesh.castShadow = true;
+            mainMesh.receiveShadow = true;
+            scene.add(mainMesh);
+
+            const edges = new THREE.EdgesGeometry(geo);
+            edgesHelper = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({
+                color: 0x3b82f6, transparent: true, opacity: 0.0
+            }));
+            scene.add(edgesHelper);
+        }
+        createDemo();
+
+        function cleanup() {
+            if(mainMesh) { scene.remove(mainMesh); mainMesh=null; }
+            if(edgesHelper) { scene.remove(edgesHelper); edgesHelper=null; }
+            if(importedPoints) { scene.remove(importedPoints); importedPoints=null; }
+            if(networkLines) { scene.remove(networkLines); networkLines=null; }
+            isIntroAnimation = false;
+        }
+
+        // ============================================
+        // 4. UI INTERACTION
+        // ============================================
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-upload').classList.add('hidden');
+            document.getElementById('tab-manual').classList.add('hidden');
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+        };
+
+        window.toggleGrid = () => {
+            gridHelper.visible = !gridHelper.visible;
+            groundPlane.visible = gridHelper.visible; 
+            document.getElementById('btn-grid').classList.toggle('active');
+        };
+
+        window.toggleAutoRotate = () => {
+            controls.autoRotate = !controls.autoRotate;
+            document.getElementById('btn-rotate').classList.toggle('active');
+        };
+
+        window.pasteText = async () => {
+            try {
+                const txt = await navigator.clipboard.readText();
+                document.getElementById('manual-text').value = txt;
+            } catch {
+                alert("Please use Ctrl+V");
+            }
+        };
+
+        window.setColor = (hex, btn) => {
+            document.querySelectorAll('.preset-dot').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            targetView.pointColor.setHex(hex);
+        };
+        
+        window.setCustomColor = (hexStr) => {
+            document.querySelectorAll('.preset-dot').forEach(b => b.classList.remove('active'));
+            targetView.pointColor.setStyle(hexStr);
+        };
+
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            document.getElementById('file-name').textContent = e.target.files[0]?.name || "";
+        });
+
+        // --- Camera ---
+        window.setCameraView = (view, btn) => {
+            const parent = btn.parentElement;
+            Array.from(parent.children).slice(0, 4).forEach(c => c.classList.remove('active')); 
+            btn.classList.add('active');
+            controls.reset();
+            const d = 50;
+            if(view === 'top') camera.position.set(0, d, 0);
+            else if(view === 'front') camera.position.set(0, 0, d);
+            else if(view === 'right') camera.position.set(d, 0, 0);
+            else camera.position.set(30, 25, 30);
+            camera.lookAt(0,0,0);
+        };
+
+        // --- Display Mode Transitions ---
+        window.setDisplayMode = (mode, btn) => {
+            const parent = document.getElementById('viewport-bar');
+            const buttons = parent.querySelectorAll('button');
+            [buttons[4], buttons[5], buttons[6], buttons[7]].forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            if(mode === 'points') {
+                targetView.pointSize = 0.6;
+                targetView.lineOpacity = 0.0;
+                targetView.meshOpacity = 0.0;
+                targetView.wireOpacity = 0.0;
+                targetView.pulseLines = false;
+            }
+            else if(mode === 'wireframe') { 
+                // [FIX] Don't hide points completely in wireframe if there's no mesh, show faint points
+                targetView.pointSize = 0.3; 
+                targetView.lineOpacity = 0.0; 
+                targetView.meshOpacity = 0.0;
+                targetView.wireOpacity = 0.8; 
+                targetView.pulseLines = false;
+            }
+            else if(mode === 'shaded') {
+                targetView.pointSize = 0.8;
+                targetView.lineOpacity = 0.0;
+                targetView.meshOpacity = 1.0; 
+                targetView.wireOpacity = 0.0;
+                targetView.pulseLines = false;
+            }
+            else if(mode === 'network') {
+                targetView.pointSize = 0.4;
+                targetView.lineOpacity = 0.2;
+                targetView.meshOpacity = 0.1;
+                targetView.wireOpacity = 0.1;
+                targetView.pulseLines = true;
+            }
+
+            if(mainMesh) mainMesh.visible = true;
+            if(edgesHelper) edgesHelper.visible = true;
+            if(importedPoints) importedPoints.visible = true;
+            if(networkLines) networkLines.visible = true;
+        };
+
+        // ============================================
+        // 5. DATA PROCESSING & INTRO ANIMATION
+        // ============================================
+        document.getElementById('process-btn').addEventListener('click', () => {
+            const delimiterVal = document.getElementById('delimiter-select').value;
+            const delimiter = delimiterVal === 'space' ? ' ' : delimiterVal === 'comma' ? ',' : '\t';
+            
+            let txt = "";
+            const fileIn = document.getElementById('file-input');
+            
+            const start = (content) => {
+                document.getElementById('progress-wrapper').style.display = 'block';
+                let p = 0;
+                const interval = setInterval(() => {
+                    p += 10;
+                    document.getElementById('progress-fill').style.width = p + '%';
+                    document.getElementById('progress-text').textContent = p + '%';
+                    if(p >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                             process(content, delimiter);
+                             document.getElementById('progress-wrapper').style.display = 'none';
+                        }, 200);
+                    }
+                }, 50);
+            };
+
+            if(!document.getElementById('tab-upload').classList.contains('hidden')) {
+                if(!fileIn.files.length) return alert("Select file");
+                const r = new FileReader();
+                r.onload = e => start(e.target.result);
+                r.readAsText(fileIn.files[0]);
+            } else {
+                txt = document.getElementById('manual-text').value;
+                if(!txt) return alert("Enter text");
+                start(txt);
+            }
+        });
+
+        function process(text, dim) {
+            try {
+                const lines = text.split('\n');
+                const verts = [];
+                
+                for(let l of lines) {
+                    l = l.trim(); if(!l) continue;
+                    let parts = l.split(dim).map(s => s.replace(/['"]/g, '')).filter(s => s !== "");
+                    if(parts.length >= 3) {
+                        const x = parseFloat(parts[0]), y = parseFloat(parts[1]), z = parseFloat(parts[2]);
+                        if(!isNaN(x)) verts.push(x, y, z);
+                    }
+                }
+                
+                if(!verts.length) throw new Error("No data");
+                
+                cleanup();
+                
+                // --- 1. Geometry Prep ---
+                const geo = new THREE.BufferGeometry();
+                const floatArr = new Float32Array(verts);
+                geo.setAttribute('position', new THREE.BufferAttribute(floatArr, 3));
+                geo.rotateX(-Math.PI/2); // Fix Rhino Z-up
+                geo.computeBoundingBox();
+
+                // Center logic
+                const bbox = geo.boundingBox;
+                const height = bbox.max.y - bbox.min.y;
+                const centerOffset = -bbox.min.y;
+                const width = Math.max(bbox.max.x - bbox.min.x, bbox.max.z - bbox.min.z);
+                const size = Math.max(height, width); // Use max dim for scaling camera
+
+                geo.translate(0, centerOffset, 0);
+
+                // [FIX] Update Clipping Planes based on model size
+                const near = Math.max(0.001, size / 1000); 
+                const far = Math.max(100000, size * 100);
+                camera.near = near;
+                camera.far = far;
+                camera.updateProjectionMatrix();
+
+                // --- 2. Setup Animation Data ---
+                animationTargetPositions = [];
+                animationStartPositions = [];
+                const finalPos = geo.attributes.position.array;
+                
+                // [FIX] Starting animation closer to camera
+                // Get Camera direction
+                const camDir = new THREE.Vector3();
+                camera.getWorldDirection(camDir);
+                const startBase = camera.position.clone().add(camDir.multiplyScalar(size * 0.5)); // Start in front
+
+                for(let i=0; i<finalPos.length; i+=3) {
+                    // Target Position
+                    animationTargetPositions.push({
+                        x: finalPos[i],
+                        y: finalPos[i+1],
+                        z: finalPos[i+2]
+                    });
+
+                    // Random Start around camera
+                    const spread = size * 0.5; // Scale spread with model
+                    animationStartPositions.push({
+                        x: startBase.x + (Math.random() - 0.5) * spread,
+                        y: startBase.y + (Math.random() - 0.5) * spread,
+                        z: startBase.z + (Math.random() - 0.5) * spread
+                    });
+                }
+                
+                const startArr = new Float32Array(verts.length);
+                for(let i=0; i<animationStartPositions.length; i++) {
+                    startArr[i*3] = animationStartPositions[i].x;
+                    startArr[i*3+1] = animationStartPositions[i].y;
+                    startArr[i*3+2] = animationStartPositions[i].z;
+                }
+                geo.setAttribute('position', new THREE.BufferAttribute(startArr, 3));
+
+                // --- 3. Points Object ---
+                const mat = new THREE.PointsMaterial({
+                    size: size * 0.02, // Auto-scale points
+                    color: targetView.pointColor, map: pointSprite,
+                    transparent: true, alphaTest: 0.1, blending: THREE.AdditiveBlending
+                });
+                importedPoints = new THREE.Points(geo, mat);
+                importedPoints.castShadow = true;
+                scene.add(importedPoints);
+
+                // --- 4. Network Lines Calculation (Distance Based) ---
+                lineIndices = [];
+                // [FIX] Increased limits to cover more of the model
+                const limit = Math.min(animationTargetPositions.length, 6000); // Increased from 1500
+                
+                // Calculate rough threshold based on model size
+                const distThreshold = size / 8; 
+
+                // Use the target positions for distance check
+                const tPos = animationTargetPositions;
+                
+                let lineCount = 0;
+                const maxLines = 40000; // Increased from 5000
+
+                // Brute force check
+                for(let i=0; i<limit; i++) {
+                    if (lineCount > maxLines) break;
+                    const p1 = tPos[i];
+                    
+                    let connected = 0;
+                    for(let j=i+1; j<limit; j++) {
+                        if (connected > 4) break; 
+                        const p2 = tPos[j];
+                        const d = (p1.x-p2.x)**2 + (p1.y-p2.y)**2 + (p1.z-p2.z)**2;
+                        
+                        if(d < distThreshold * distThreshold) {
+                            lineIndices.push(i, j);
+                            lineCount++;
+                            connected++;
+                        }
+                    }
+                }
+                
+                const lineGeo = new THREE.BufferGeometry();
+                const lineVerts = new Float32Array(lineIndices.length * 3);
+                lineGeo.setAttribute('position', new THREE.BufferAttribute(lineVerts, 3));
+                
+                networkLines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+                    color: targetView.pointColor, 
+                    transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending
+                }));
+                networkLines.visible = true;
+                scene.add(networkLines);
+
+                // --- 5. Start Animation ---
+                isIntroAnimation = true;
+                introProgress = 0;
+
+                controls.target.set(0, height/2, 0);
+                camera.position.set(size*1.5, size*1.2, size*1.5);
+                camera.lookAt(0, height/2, 0);
+                
+                setDisplayMode('network', document.getElementById('btn-mode-network'));
+
+            } catch(e) { alert("Error parsing data: " + e.message); console.error(e); }
+        }
+
+        // ============================================
+        // 6. ANIMATION LOOP (Physics & Intro)
+        // ============================================
+        function easeOutCubic(x) {
+            return 1 - Math.pow(1 - x, 3);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // --- Intro Animation ---
+            if(isIntroAnimation && importedPoints) {
+                introProgress += 0.012; 
+                if(introProgress > 1) {
+                    introProgress = 1;
+                    isIntroAnimation = false;
+                }
+
+                const ease = easeOutCubic(introProgress);
+                const positions = importedPoints.geometry.attributes.position.array;
+                
+                for(let i=0; i<animationTargetPositions.length; i++) {
+                    const start = animationStartPositions[i];
+                    const target = animationTargetPositions[i];
+                    
+                    positions[i*3] = start.x + (target.x - start.x) * ease;
+                    positions[i*3+1] = start.y + (target.y - start.y) * ease;
+                    positions[i*3+2] = start.z + (target.z - start.z) * ease;
+                }
+                importedPoints.geometry.attributes.position.needsUpdate = true;
+
+                if(networkLines) {
+                    const linePos = networkLines.geometry.attributes.position.array;
+                    for(let k=0; k<lineIndices.length; k+=2) {
+                        const idx1 = lineIndices[k]; 
+                        const idx2 = lineIndices[k+1]; 
+                        
+                        linePos[k*3] = positions[idx1*3];
+                        linePos[k*3+1] = positions[idx1*3+1];
+                        linePos[k*3+2] = positions[idx1*3+2];
+                        
+                        linePos[(k+1)*3] = positions[idx2*3];
+                        linePos[(k+1)*3+1] = positions[idx2*3+1];
+                        linePos[(k+1)*3+2] = positions[idx2*3+2];
+                    }
+                    networkLines.geometry.attributes.position.needsUpdate = true;
+                    
+                    if(introProgress > 0.6) {
+                        const fade = (introProgress - 0.6) * 2.5; 
+                        networkLines.material.opacity = fade * targetView.lineOpacity;
+                        // [FIX] Sync color immediately
+                        networkLines.material.color.copy(targetView.pointColor);
+                    } else {
+                        networkLines.material.opacity = 0;
+                    }
+                }
+            }
+
+            // --- Regular State Transitions ---
+            if(importedPoints && !isIntroAnimation) {
+                // Size
+                importedPoints.material.size = THREE.MathUtils.lerp(importedPoints.material.size, targetView.pointSize, 0.1);
+                // Color
+                importedPoints.material.color.lerp(targetView.pointColor, 0.05);
+                
+                // [FIX] Don't hide points in Wireframe mode if meshOpacity is 0
+                let minOpacity = (targetView.wireOpacity > 0.1) ? 0.3 : 0.0;
+                let targetPointOp = Math.max(minOpacity, (targetView.pointSize > 0.1 ? 1.0 : 0.0));
+                
+                importedPoints.material.opacity = THREE.MathUtils.lerp(importedPoints.material.opacity, targetPointOp, 0.1);
+
+                if(networkLines) {
+                    // [FIX] Update Line Color to match points
+                    networkLines.material.color.lerp(targetView.pointColor, 0.05);
+
+                    let targetOp = targetView.lineOpacity;
+                    if(targetView.pulseLines) targetOp += Math.sin(Date.now() * 0.002) * 0.05;
+                    networkLines.material.opacity = THREE.MathUtils.lerp(networkLines.material.opacity, targetOp, 0.05);
+                    networkLines.visible = networkLines.material.opacity > 0.001;
+                }
+            }
+            
+            // --- Main Mesh Transitions ---
+            if(mainMesh) {
+                mainMesh.material.color.lerp(targetView.pointColor, 0.05);
+                mainMesh.material.opacity = THREE.MathUtils.lerp(mainMesh.material.opacity, targetView.meshOpacity, 0.05);
+                mainMesh.visible = mainMesh.material.opacity > 0.01;
+            }
+            if(edgesHelper) {
+                edgesHelper.material.opacity = THREE.MathUtils.lerp(edgesHelper.material.opacity, targetView.wireOpacity, 0.05);
+                edgesHelper.visible = edgesHelper.material.opacity > 0.01;
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.onresize = () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+    </script>
+    <div class="contact-popup-overlay" id="contact-popup">
+        <div class="contact-popup-content">
+            <span class="close-popup" onclick="closeContactPopup()" onmouseenter="cursorHover()" onmouseleave="cursorLeave()">&times;</span>
+            <h2 data-i18n="stepInto">Step Into Your Vision</h2>
+            <p data-i18n="popupSub">Let's craft reality together.</p>
+            <div class="popup-social-icons">
+                <a href="https://www.youtube.com/@khalidal-bdawy" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.instagram.com/albdawy.art" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-instagram"></i></a>
+                <a href="https://wa.me/201096277438" target="_blank" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fab fa-whatsapp"></i></a>
+                <a href="mailto:khalidalbdawy@gmail.com" onmouseenter="cursorHover()" onmouseleave="cursorLeave()"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </div>
+    <script>
+        
+    </script>
+    <script>
+    function openContactPopup(e) {
+        if (e) e.preventDefault();
+        const popup = document.getElementById('contact-popup');
+        if (popup && !popup.classList.contains('active')) {
+            popup.classList.add('active');
+            history.pushState({ popupOpen: true }, '', '');
+        }
+    }
+    function closeContactPopup(fromPopState) {
+        const popup = document.getElementById('contact-popup');
+        if (popup && popup.classList.contains('active')) {
+            popup.classList.remove('active');
+            if (fromPopState !== true && history.state && history.state.popupOpen) {
+                history.back();
+            }
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const popup = document.getElementById('contact-popup');
+        if (popup) {
+            popup.addEventListener('click', function(e) {
+                if (e.target === this) closeContactPopup();
+            });
+        }
+    });
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeContactPopup();
+    });
+    window.addEventListener('popstate', function(e) {
+        closeContactPopup(true);
+    });
+</script>
+</body>
+</html>

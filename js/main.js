@@ -225,21 +225,87 @@ function openSite() {
     window.explosionTriggered = !isLightMode;
     window.cubesTriggered = isLightMode;
 
+    function revealPage() {
+        const nav = document.querySelector('nav');
+        if (nav) nav.style.opacity = '1';
+        const h1 = document.querySelector('h1');
+        if (h1) { h1.style.opacity = '1'; h1.style.transform = 'translateY(0)'; }
+        const btn = document.querySelector('.cta-btn');
+        if (btn) { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }
+    }
+
     const preloader = document.getElementById('preloader');
+    const logoAnim = document.querySelector('.logo-animation-container');
+    const brandTarget = document.querySelector('.brand-svg');
+
     if (preloader) {
-        preloader.classList.add('slide-up');
-        setTimeout(() => {
-            const nav = document.querySelector('nav');
-            if (nav) nav.style.opacity = '1';
-            const h1 = document.querySelector('h1');
-            if (h1) { h1.style.opacity = '1'; h1.style.transform = 'translateY(0)'; }
-            const btn = document.querySelector('.cta-btn');
-            if (btn) { btn.style.opacity = '1'; btn.style.transform = 'translateY(0)'; }
-        }, 500);
+        const khalidSvg = document.querySelector('.khalid-svg');
+        const albdawySvg = document.querySelector('.albdawy-svg');
+        
+        if (khalidSvg && albdawySvg && brandTarget && brandTarget.getBoundingClientRect().height > 0) {
+            // Setup target visibility
+            brandTarget.style.opacity = '0';
+            brandTarget.style.transition = 'opacity 0.2s ease';
+
+            // Fade out Albdawy entirely staying in place
+            albdawySvg.style.transition = 'opacity 0.6s ease';
+            albdawySvg.style.opacity = '0';
+
+            // FLIP animation: move Khalid portion to navbar brand
+            const brandRect = brandTarget.getBoundingClientRect();
+            const svgRect = khalidSvg.getBoundingClientRect();
+
+            // Khalid occupies x=0 to x=282 in viewBox 573.6
+            // Center of Khalid in SVG-space is ~ x=141 
+            const khalidFractionX = 141 / 573.6;  
+            const khalidFractionY = 0.5;
+
+            // Khalid center in screen-space
+            const khalidCx = svgRect.left + svgRect.width * khalidFractionX;
+            const khalidCy = svgRect.top + svgRect.height * khalidFractionY;
+
+            // Brand center in screen-space
+            const brandCx = brandRect.left + brandRect.width / 2;
+            const brandCy = brandRect.top + brandRect.height / 2;
+
+            // Scale: Khalid height in SVG is ~103.8 out of 117.2 total
+            const khalidHeightRatio = 103.8 / 117.2;
+            const targetScale = brandRect.height / (svgRect.height * khalidHeightRatio);
+
+            const tx = brandCx - khalidCx;
+            const ty = brandCy - khalidCy;
+
+            // Animate ONLY khalidSvg moving to the corner
+            khalidSvg.style.transformOrigin = `${khalidFractionX * 100}% ${khalidFractionY * 100}%`;
+            khalidSvg.style.transition = 'transform 1.1s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.15s 0.95s ease';
+            khalidSvg.style.transform = `translate(${tx}px, ${ty}px) scale(${targetScale})`;
+            khalidSvg.style.opacity = '0';
+
+            preloader.style.transition = 'background-color 1s ease';
+            preloader.style.backgroundColor = 'transparent';
+            
+            // Start revealing immediately as background dissolves
+            revealPage();
+
+            // Crossfade target exactly as khalidSvg lands
+            setTimeout(() => {
+                brandTarget.style.opacity = '1';
+            }, 950);
+
+            setTimeout(() => {
+                preloader.style.display = 'none';
+            }, 1200);
+        } else {
+            // Fallback
+            preloader.classList.add('slide-up');
+            setTimeout(revealPage, 500);
+        }
+    } else {
+        revealPage();
     }
 }
-window.addEventListener('load', () => setTimeout(openSite, 1800));
-setTimeout(openSite, 3500);
+window.addEventListener('load', () => setTimeout(openSite, 3200));
+setTimeout(openSite, 5000);
 
 // --- GRID GENERATION ---
 const gridContainer = document.getElementById('projects-grid');

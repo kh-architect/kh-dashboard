@@ -333,8 +333,25 @@ gallery.addEventListener('scroll', () => {
 loadImages();
 
 // --- LIGHTBOX ---
-function openLightbox(idx) { curIndex = idx; document.getElementById('lightbox').classList.add('active'); document.body.classList.add('in-lightbox'); updateLightbox(); }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); document.body.classList.remove('in-lightbox'); const container = document.getElementById('lightbox-content-wrapper'); const vid = container.querySelector('video'); if (vid) vid.pause(); }
+function openLightbox(idx) {
+    curIndex = idx;
+    document.getElementById('lightbox').classList.add('active');
+    document.body.classList.add('in-lightbox');
+    updateLightbox();
+    history.pushState({ lightboxOpen: true }, '', '');
+}
+function closeLightbox(fromPopState) {
+    const lb = document.getElementById('lightbox');
+    if (!lb || !lb.classList.contains('active')) return;
+    lb.classList.remove('active');
+    document.body.classList.remove('in-lightbox');
+    const container = document.getElementById('lightbox-content-wrapper');
+    const vid = container.querySelector('video');
+    if (vid) vid.pause();
+    if (fromPopState !== true && history.state && history.state.lightboxOpen) {
+        history.back();
+    }
+}
 function changeImage(dir) { curIndex += dir; if (curIndex < 0) curIndex = mediaItems.length - 1; if (curIndex >= mediaItems.length) curIndex = 0; updateLightbox(); }
                         function updateLightbox() {
     const container = document.getElementById('lightbox-content-wrapper');
@@ -836,6 +853,7 @@ window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeContactPopup();
 });
 window.addEventListener('popstate', function (e) {
+    closeLightbox(true);
     closeContactPopup(true);
 });
 

@@ -213,9 +213,45 @@ window.triggerShutter = triggerShutter;
 
 function toggleMobileMenu() {
     const mobileNav = document.getElementById('mobile-nav');
-    if (mobileNav) mobileNav.classList.toggle('active');
+    if (!mobileNav) return;
+    const isOpen = mobileNav.classList.contains('active');
+    if (isOpen) {
+        closeMobileMenu();
+    } else {
+        openMobileMenu();
+    }
 }
+
+function openMobileMenu() {
+    const mobileNav = document.getElementById('mobile-nav');
+    if (!mobileNav || mobileNav.classList.contains('active')) return;
+    mobileNav.classList.add('active');
+    history.pushState({ mobileMenuOpen: true }, '', '');
+}
+
+function closeMobileMenu(fromPopState) {
+    const mobileNav = document.getElementById('mobile-nav');
+    if (!mobileNav || !mobileNav.classList.contains('active')) return;
+    mobileNav.classList.remove('active');
+    // If not triggered by popstate, go back to remove the history entry we pushed
+    if (fromPopState !== true && history.state && history.state.mobileMenuOpen) {
+        history.back();
+    }
+}
+
 window.toggleMobileMenu = toggleMobileMenu;
+window.closeMobileMenu = closeMobileMenu;
+
+// Close mobile menu when tapping on the overlay background (empty area)
+document.addEventListener('DOMContentLoaded', function () {
+    const mobileNav = document.getElementById('mobile-nav');
+    if (mobileNav) {
+        mobileNav.addEventListener('click', function (e) {
+            // Close if the click was NOT on a link (any empty area)
+            if (!e.target.closest('a')) closeMobileMenu();
+        });
+    }
+});
 
 function openSite() {
     if (siteOpened) return;
@@ -410,6 +446,7 @@ window.addEventListener('keydown', function (e) {
 });
 
 window.addEventListener('popstate', function (e) {
+    closeMobileMenu(true);
     closeContactPopup(true);
 });
 // --- Gyroscope / Device Orientation Handling ---

@@ -1324,6 +1324,24 @@ body.light-mode .popup-social-icons a {
     transform: translateY(-5px);
     border-color: var(--accent);
 }
+
+.social-svg {
+    width: 20px;
+    height: 20px;
+    transition: filter 0.3s;
+}
+
+body.light-mode .popup-social-icons a .social-svg {
+    filter: brightness(0);
+}
+
+body:not(.light-mode) .popup-social-icons a .social-svg {
+    filter: invert(1);
+}
+
+.popup-social-icons a:hover .social-svg {
+    filter: brightness(0) invert(1) !important;
+}
 /* CTA Button Styling */
 .cta-btn {
     opacity: 0;
